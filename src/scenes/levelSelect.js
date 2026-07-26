@@ -4,9 +4,21 @@
 import CONFIG from '../data/config.js';
 import { isUnlocked, totalGoo } from '../systems/save.js';
 import { drawCharacter } from '../render/sprites.js';
+import { drawButton, hit } from '../render/uiButtons.js';
 
 // One source of truth for where the cards are, so what you SEE is exactly
 // what you can CLICK. Computing them twice is how they drift apart.
+// Big tap targets, because an iPad has no arrow keys.
+export function menuButtons(view) {
+  const w = 210, h = 52, gap = 18;
+  const y = view.h - 128;
+  const x = view.w / 2 - w - gap / 2;
+  return [
+    { id: 'maker', label: '🎨  Monster Maker', x, y, w, h },
+    { id: 'editor', label: '🛠  Make a Level', x: x + w + gap, y, w, h }
+  ];
+}
+
 export function cardRects(sel, view) {
   const cardW = 132, cardH = 92, gap = 16;
   const total = sel.levels.length * cardW + (sel.levels.length - 1) * gap;
@@ -36,13 +48,25 @@ export function update(sel, input, now, view) {
   // lie the interface tells you.
   if (input.pointerClick) {
     input.pointerClick = false;
-    const hit = view ? hitCard(sel, view, input.pointerX, input.pointerY) : null;
-    if (hit) {
-      sel.index = hit.i;
-      sel.lastMove = now;
-      if (isUnlocked(sel.save, sel.levels, hit.i)) return hit.lv;
+    const px = input.pointerX, py = input.pointerY;
+
+    if (view) {
+      for (const b of menuButtons(view)) {
+        if (hit(b, px, py)) {
+          if (b.id === 'maker') sel.openMaker = true;
+          else sel.openEditor = true;
+          return null;
+        }
+      }
     }
-    return null;                       // clicking empty space does nothing
+
+    const card = view ? hitCard(sel, view, px, py) : null;
+    if (card) {
+      sel.index = card.i;
+      sel.lastMove = now;
+      if (isUnlocked(sel.save, sel.levels, card.i)) return card.lv;
+    }
+    return null;                       // tapping empty space does nothing
   }
 
   // Keyboard only from here — a mouse press must not launch the highlighted
@@ -111,10 +135,13 @@ export function draw(ctx, sel, view) {
 
   ctx.fillStyle = '#9cff6b';
   ctx.font = 'bold 15px system-ui, sans-serif';
-  ctx.fillText('Click a level, or ← →  and any button', view.w / 2, view.h - 64);
-  ctx.fillStyle = '#dfffcb';
-  ctx.font = '14px system-ui, sans-serif';
-  ctx.fillText('↑  Monster Maker        ↓  MAKE YOUR OWN LEVEL', view.w / 2, view.h - 40);
+  ctx.fillText('Tap a level to play it', view.w / 2, view.h - 148);
+  ctx.textAlign = 'left';
+  for (const b of menuButtons(view)) drawButton(ctx, b, b.label, { size: 15 });
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#5e7a68';
+  ctx.font = '12px system-ui, sans-serif';
+  ctx.fillText('(or use ← →  and any button)', view.w / 2, view.h - 52);
 
   // Which build am I actually running? Answering that by eye beats guessing.
   ctx.fillStyle = '#3f5a48';

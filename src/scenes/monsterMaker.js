@@ -8,6 +8,7 @@
 import { SLOTS, isPartUnlocked, nextUnlock, defaultCharacter } from '../data/parts.js';
 import { totalGoo } from '../systems/save.js';
 import { drawCharacter } from '../render/sprites.js';
+import { drawButton, hit } from '../render/uiButtons.js';
 
 export function createMaker(saveData) {
   return {
@@ -35,7 +36,88 @@ export function attachTyping(maker, target = window) {
   return () => target.removeEventListener('keydown', onKey);
 }
 
-export function update(maker, input, now) {
+// Tap targets, because an iPad has no arrow keys and no Enter.
+export function makerRects(view) {
+  const left = view.w / 2 - 20;
+  const rowY = (i) => 150 + i * 42;
+  const rows = [];
+  for (let i = 0; i <= SLOTS.length; i++) {
+    rows.push({ id: 'row' + i, i, x: left - 8, y: rowY(i) - 22, w: 320, h: 34 });
+  }
+  const arrows = [];
+  for (let i = 1; i <= SLOTS.length; i++) {
+    arrows.push({ id: 'less', i, x: left + 96, y: rowY(i) - 22, w: 40, h: 34 });
+    arrows.push({ id: 'more', i, x: left + 250, y: rowY(i) - 22, w: 40, h: 34 });
+  }
+  return {
+    rows,
+    arrows,
+    name: { x: left + 96, y: rowY(0) - 22, w: 200, h: 34 },
+    play: { x: view.w / 2 - 90, y: view.h - 108, w: 180, h: 52 }
+  };
+}
+
+// An iPad only shows its keyboard for a real text field, so keep an invisible
+// one off-screen and focus it when the player wants to type their name.
+export function attachNameField(maker, doc = document) {
+  let el = doc.getElementById('mm-name');
+  if (!el) {
+    el = doc.createElement('input');
+    el.id = 'mm-name';
+    el.type = 'text';
+    el.maxLength = 12;
+    el.autocapitalize = 'characters';
+    el.style.cssText =
+      'position:fixed;left:-2000px;top:0;width:10px;height:10px;opacity:0;';
+    doc.body.appendChild(el);
+    el.addEventListener('input', () => {
+      maker.character.name = el.value.replace(/[^A-Za-z0-9 ]/g, '').slice(0, 12);
+    });
+  }
+  maker.nameField = el;
+  return el;
+}
+
+export function focusName(maker) {
+  if (!maker.nameField) return;
+  maker.nameField.value = maker.character.name;
+  try { maker.nameField.focus(); } catch { /* ignore */ }
+}
+
+export function update(maker, input, now, view) {
+  // --- taps ---
+  if (input.pointerClick && view) {
+    input.pointerClick = false;
+    const r = makerRects(view);
+    const px = input.pointerX, py = input.pointerY;
+
+    if (hit(r.play, px, py)) return maker.character;
+
+    if (hit(r.name, px, py)) { maker.row = 0; focusName(maker); return null; }
+
+    for (const a of r.arrows) {
+      if (hit(a, px, py)) {
+        maker.row = a.i;
+        const slot = SLOTS[a.i - 1];
+        const n = slot.options.length;
+        const step = a.id === 'more' ? 1 : -1;
+        let idx = maker.character[slot.key];
+        for (let tries = 0; tries < n; tries++) {
+          idx = (idx + step + n) % n;
+          if (isPartUnlocked(slot.options[idx], maker.goo)) break;
+        }
+        maker.character[slot.key] = idx;
+        maker.lastMove = now;
+        return null;
+      }
+    }
+
+    for (const row of r.rows) {
+      if (hit(row, px, py)) { maker.row = row.i; if (row.i === 0) focusName(maker); return null; }
+    }
+    return null;
+  }
+
   if (now - maker.lastMove < 170) return null;
 
   if (input.down) { maker.row = Math.min(SLOTS.length, maker.row + 1); maker.lastMove = now; }
@@ -119,9 +201,17 @@ export function draw(ctx, maker, view) {
   });
 
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#9cff6b';
-  ctx.font = 'bold 15px system-ui, sans-serif';
-  ctx.fillText('↑ ↓ pick a row    ← → change it    type your name    ENTER to play',
-    view.w / 2, view.h - 54);
+  const r = makerRects(view);
+  ctx.textAlign = 'left';
+  for (const a of r.arrows) {
+    if (a.i !== maker.row) continue;
+    drawButton(ctx, a, a.id === 'more' ? '▶' : '◀', { size: 16 });
+  }
+  drawButton(ctx, r.play, '▶  PLAY', { size: 17 });
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#5e7a68';
+  ctx.font = '12px system-ui, sans-serif';
+  ctx.fillText('Tap a row to change it, or use ↑ ↓ ← →', view.w / 2, view.h - 30);
   ctx.textAlign = 'left';
 }

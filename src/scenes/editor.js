@@ -142,9 +142,10 @@ export function toolRects(ed, view) {
 }
 
 export function buttonRects(view) {
-  const y = view.h - 76;
+  const y = view.h - 116;
   return [
-    { id: 'play', label: '▶  PLAY IT', x: 8, y, w: PALETTE_W - 16, h: 30 },
-    { id: 'clear', label: 'Start over', x: 8, y: y + 36, w: PALETTE_W - 16, h: 26 }
+    { id: 'play', label: '▶  PLAY IT', x: 8, y, w: PALETTE_W - 16, h: 44 },
+    { id: 'back', label: '←  Back', x: 8, y: y + 50, w: PALETTE_W - 16, h: 30 },
+    { id: 'clear', label: 'Start over', x: 8, y: y + 86, w: PALETTE_W - 16, h: 26 }
   ];
 }

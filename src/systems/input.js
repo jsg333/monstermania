@@ -88,6 +88,15 @@ export function createInput(target = window) {
     }
     e.preventDefault();
   };
+  // Without this the finger's position never updates, so you can't drag to
+  // draw in the Level Maker and nothing hovers.
+  const onTouchMove = (e) => {
+    if (inUI(e)) return;
+    const t = e.changedTouches[0];
+    if (t) { state.pointerX = t.clientX; state.pointerY = t.clientY; }
+    e.preventDefault();
+  };
+
   const onTouchEnd = (e) => {
     state.pointerDown = false;
     for (const t of e.changedTouches) {
@@ -105,6 +114,7 @@ export function createInput(target = window) {
   target.addEventListener('mouseup', onMouseUp);
   target.addEventListener('contextmenu', onContextMenu);
   target.addEventListener('touchstart', onTouchStart, { passive: false });
+  target.addEventListener('touchmove', onTouchMove, { passive: false });
   target.addEventListener('touchend', onTouchEnd);
   target.addEventListener('blur', () => { held.clear(); state.left = state.right = state.jump = false; });
 

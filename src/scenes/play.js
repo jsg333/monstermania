@@ -12,6 +12,7 @@ import { applyIckio, reachedExit } from '../systems/ickio.js';
 import { stepBoss, bossCollision, damageBoss, bossBox, isWindingUp } from '../systems/boss.js';
 import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff, drawGogio, drawFungy, drawGooDrop, drawIckio, drawBigIckio } from '../render/sprites.js';
 import { drawFps, drawHint } from '../render/ui.js';
+import { drawButton, hit } from '../render/uiButtons.js';
 import { sfx } from '../systems/sound.js';
 import { themeFor } from '../data/themes.js';
 import { drawBackdrop } from '../render/backdrop.js';
@@ -20,8 +21,10 @@ export function update(state, input, dt, now) {
   state.puff = stepPuff(state.puff, dt);
   state.time = now;
 
-  // Never trap a player in a level they can't finish.
-  if (input.escape) {
+  // Never trap a player in a level they can't finish. ESC on a laptop, and a
+  // tappable button for anyone on an iPad.
+  if (input.escape || (input.pointerClick && hit(state.menuButton, input.pointerX, input.pointerY))) {
+    input.pointerClick = false;
     state.backToSelect = true;
     return state;
   }
@@ -151,6 +154,10 @@ export function draw(ctx, state, fps) {
   drawPuff(ctx, state.puff);
 
   ctx.restore();
+
+  // Remembered so update() can hit-test it next frame.
+  state.menuButton = { x: view.w - 104, y: 14, w: 90, h: 44 };
+  drawButton(ctx, state.menuButton, 'MENU', { bg: 'rgba(12,30,20,.85)' });
 
   drawFps(ctx, fps);
   drawHint(ctx, 'Arrows or A/D to move  ·  ANY other button to jump  ·  land on TOP of a monster — his sides have spikes!  ·  ESC = menu', view.h - 40);

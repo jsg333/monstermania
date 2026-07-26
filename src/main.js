@@ -41,6 +41,7 @@ const saveEditor = () => {
 
 const maker = monsterMaker.createMaker(sel.save);
 monsterMaker.attachTyping(maker, window);
+monsterMaker.attachNameField(maker, document);
 if (!sel.save.character) scene = 'maker';
 
 const jumpTo = params.get('level');
@@ -119,6 +120,13 @@ function tick(now, dt) {
             if (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h) {
               handled = true;
               if (r.id === 'clear') { ed = editor.createEditor(null); saveEditor(); }
+              if (r.id === 'back') {
+                saveEditor();
+                scene = 'select';
+                sel.openedAt = now;
+                input.jump = false;
+                input.jumpConsumed = true;
+              }
               if (r.id === 'play') {
                 const built = editor.tryBuild(ed, 'My Level');
                 if (built && built.error) {
@@ -152,7 +160,7 @@ function tick(now, dt) {
         drawEditor(ctx, ed, view, hover);
       }
     } else if (scene === 'maker') {
-      const done = monsterMaker.update(maker, input, now);
+      const done = monsterMaker.update(maker, input, now, view);
       monsterMaker.draw(ctx, maker, view);
       if (done) {
         sel.save = save({ ...sel.save, character: { ...done } });

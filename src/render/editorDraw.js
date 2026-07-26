@@ -86,8 +86,8 @@ export function drawEditor(ctx, ed, view, hover) {
 
   // ---- buttons ----
   for (const r of buttonRects(view)) {
-    button(ctx, r, false, r.id === 'play' ? '#2f6b45' : '#241a1a');
-    ctx.fillStyle = r.id === 'play' ? '#dfffcb' : '#b98a8a';
+    button(ctx, r, false, r.id === 'play' ? '#2f6b45' : (r.id === 'back' ? '#1b3d29' : '#241a1a'));
+    ctx.fillStyle = r.id === 'play' ? '#dfffcb' : (r.id === 'back' ? '#9ecfae' : '#b98a8a');
     ctx.font = 'bold 13px system-ui, sans-serif';
     ctx.fillText(r.label, r.x + 12, r.y + 20);
   }
