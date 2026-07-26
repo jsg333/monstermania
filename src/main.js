@@ -7,6 +7,8 @@ import playground from './data/levels/playground.js';
 import * as play from './scenes/play.js';
 import * as levelSelect from './scenes/levelSelect.js';
 import * as monsterMaker from './scenes/monsterMaker.js';
+import * as editor from './scenes/editor.js';
+import { drawEditor } from './render/editorDraw.js';
 import { totalGoo } from './systems/save.js';
 
 const canvas = document.getElementById('game');
@@ -29,6 +31,14 @@ const sel = {
 
 // Skip straight into a level with ?level=1-3, handy for testing.
 // First time here? Build your monster before you play.
+const EDITOR_KEY = 'monstermania.mylevel.v1';
+let ed = editor.createEditor(
+  (() => { try { return JSON.parse(localStorage.getItem(EDITOR_KEY)); } catch { return null; } })()
+);
+const saveEditor = () => {
+  try { localStorage.setItem(EDITOR_KEY, JSON.stringify(ed.grid)); } catch { /* ignore */ }
+};
+
 const maker = monsterMaker.createMaker(sel.save);
 monsterMaker.attachTyping(maker, window);
 if (!sel.save.character) scene = 'maker';
@@ -79,7 +89,69 @@ function tick(now, dt) {
   const view = { w: ctx.canvas.width / dpr, h: ctx.canvas.height / dpr };
 
   try {
-    if (scene === 'maker') {
+    if (scene === 'editor') {
+      const hover = editor.cellAt(view, input.pointerX, input.pointerY);
+
+      if (input.escape) {
+        saveEditor();
+        scene = 'select';
+        sel.openedAt = now;
+        input.escape = false;
+        input.jump = false;
+        input.jumpConsumed = true;
+        input.pointerClick = false;
+      } else if (input.pointerClick || input.pointerDown) {
+        const px = input.pointerX, py = input.pointerY;
+        let handled = false;
+
+        if (input.pointerClick) {
+          for (const r of editor.tabRects(view)) {
+            if (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h) {
+              ed.tab = r.i; ed.tool = 0; handled = true;
+            }
+          }
+          for (const r of editor.toolRects(ed, view)) {
+            if (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h) {
+              ed.tool = r.i; handled = true;
+            }
+          }
+          for (const r of editor.buttonRects(view)) {
+            if (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h) {
+              handled = true;
+              if (r.id === 'clear') { ed = editor.createEditor(null); saveEditor(); }
+              if (r.id === 'play') {
+                const built = editor.tryBuild(ed, 'My Level');
+                if (built && built.error) {
+                  ed.message = built.error;
+                } else {
+                  saveEditor();
+                  game = createState(built, sel.save.character);
+                  game.fromEditor = true;
+                  clearedHandled = true;          // custom levels don't unlock anything
+                  scene = 'play';
+                  input.jump = false;
+                  input.jumpConsumed = true;
+                }
+              }
+            }
+          }
+          input.pointerClick = false;
+        }
+
+        // painting on the grid — drag to draw
+        if (!handled && hover && scene === 'editor') {
+          if (editor.paint(ed, hover.col, hover.row, editor.currentTool(ed).ch)) {
+            ed.dirty = true;
+          }
+        }
+      }
+
+      if (scene === 'editor') {
+        if (ed.dirty) { ed.lastCheck = editor.validate(ed); ed.dirty = false; saveEditor(); }
+        if (!ed.lastCheck) ed.lastCheck = editor.validate(ed);
+        drawEditor(ctx, ed, view, hover);
+      }
+    } else if (scene === 'maker') {
       const done = monsterMaker.update(maker, input, now);
       monsterMaker.draw(ctx, maker, view);
       if (done) {
@@ -98,7 +170,13 @@ function tick(now, dt) {
     } else if (scene === 'select') {
       const chosen = levelSelect.update(sel, input, now, view);
       levelSelect.draw(ctx, sel, view);
-      if (sel.openMaker) {
+      if (sel.openEditor) {
+        sel.openEditor = false;
+        input.down = false;
+        input.jump = false;
+        input.jumpConsumed = true;
+        scene = 'editor';
+      } else if (sel.openMaker) {
         sel.openMaker = false;
         input.up = false;
         maker.goo = totalGoo(sel.save);
@@ -126,7 +204,12 @@ function tick(now, dt) {
         game.nextTitle = next ? `${next.id}  ${next.title}` : null;
       }
 
-      if (game.advance) {
+      if (game.advance && game.fromEditor) {
+        scene = 'editor';              // finished your own level — back to building
+        game.advance = false;
+        input.jump = false;
+        input.jumpConsumed = true;
+      } else if (game.advance) {
         const at = levels.findIndex((l) => l.id === game.level.id);
         const next = at >= 0 ? levels[at + 1] : null;
         if (next) {
@@ -145,7 +228,7 @@ function tick(now, dt) {
       }
 
       if (game.backToSelect) {
-        scene = 'select';
+        scene = game.fromEditor ? 'editor' : 'select';
         sel.openedAt = now;
         game.backToSelect = false;
         input.jump = false;
@@ -178,6 +261,8 @@ window.__mm = {
   get sel() { return sel; },
   get fps() { return fps; },
   get maker() { return maker; },
+  get editor() { return ed; },
+  openEditor() { scene = 'editor'; },
   goTo(id) {
     const found = levels.find((l) => l.id === id);
     if (!found) return false;

@@ -20,7 +20,7 @@ export function createInput(target = window) {
     // Where the mouse/finger is, and whether it was just pressed. Menus need
     // real coordinates: cards look like buttons, so clicking one must pick
     // THAT card rather than launching whatever the keyboard had highlighted.
-    pointerX: 0, pointerY: 0, pointerClick: false, jumpFromPointer: false,
+    pointerX: 0, pointerY: 0, pointerClick: false, pointerDown: false, jumpFromPointer: false,
     jump: false,             // is the button being held right now?
     jumpPressedAt: -Infinity, // when it was pressed
     jumpConsumed: true        // has this press already been used or thrown away?
@@ -63,11 +63,12 @@ export function createInput(target = window) {
     state.pointerX = e.clientX;
     state.pointerY = e.clientY;
     state.pointerClick = true;
+    state.pointerDown = true;          // held, so the Level Maker can paint by dragging
     state.jumpFromPointer = true;
     held.add('mouse' + e.button);
     press(performance.now());
   };
-  const onMouseUp = (e) => { held.delete('mouse' + e.button); if (held.size === 0) state.jump = false; };
+  const onMouseUp = (e) => { state.pointerDown = false; held.delete('mouse' + e.button); if (held.size === 0) state.jump = false; };
   const onContextMenu = (e) => e.preventDefault();
 
   // Touch: left half of the screen steers, right half jumps.
@@ -77,6 +78,7 @@ export function createInput(target = window) {
       state.pointerX = e.changedTouches[0].clientX;
       state.pointerY = e.changedTouches[0].clientY;
       state.pointerClick = true;
+      state.pointerDown = true;
       state.jumpFromPointer = true;
     }
     for (const t of e.changedTouches) {
@@ -87,6 +89,7 @@ export function createInput(target = window) {
     e.preventDefault();
   };
   const onTouchEnd = (e) => {
+    state.pointerDown = false;
     for (const t of e.changedTouches) {
       if (t.clientX < window.innerWidth * 0.25) state.left = false;
       else if (t.clientX < window.innerWidth * 0.5) state.right = false;

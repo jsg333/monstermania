@@ -29,6 +29,7 @@ export function update(sel, input, now, view) {
     if (input.left) { sel.index = Math.max(0, sel.index - 1); sel.lastMove = now; }
   }
   if (input.up && now - sel.openedAt > 300) { sel.openMaker = true; return null; }
+  if (input.down && now - sel.openedAt > 300) { sel.openEditor = true; return null; }
 
   // A click has to mean "this card", not "the card the keyboard is on".
   // Every card looks like a button; clicking one and getting level 1-1 is a
@@ -110,7 +111,10 @@ export function draw(ctx, sel, view) {
 
   ctx.fillStyle = '#9cff6b';
   ctx.font = 'bold 15px system-ui, sans-serif';
-  ctx.fillText('Click a level, or ← →  and any button      ↑  Monster Maker', view.w / 2, view.h - 60);
+  ctx.fillText('Click a level, or ← →  and any button', view.w / 2, view.h - 64);
+  ctx.fillStyle = '#dfffcb';
+  ctx.font = '14px system-ui, sans-serif';
+  ctx.fillText('↑  Monster Maker        ↓  MAKE YOUR OWN LEVEL', view.w / 2, view.h - 40);
 
   // Which build am I actually running? Answering that by eye beats guessing.
   ctx.fillStyle = '#3f5a48';
