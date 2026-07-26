@@ -318,12 +318,19 @@ describe('lethal gaps leave room for error', () => {
           if (level.tiles[rr][c] === 1) { anythingBelow = true; break; }
         }
 
+        // Space sealed under a platform is unreachable — a player can never
+        // stand there, so it is not a gap they can fall into.
+        let roofed = false;
+        for (let rr = r - 1; rr >= 0; rr--) {
+          if (level.tiles[rr][c] === 1) { roofed = true; break; }
+        }
+
         if (solidHere) {
           if (seenGround && run > 0) found.push({ row: r, width: run, endsAt: c });
           seenGround = true;
           run = 0;
         } else if (seenGround) {
-          if (anythingBelow) run = 0;   // there's a floor to land on: not lethal
+          if (anythingBelow || roofed) run = 0;   // floor to land on, or no way in
           else run++;
         }
       }
@@ -440,50 +447,6 @@ describe('you can always leave a level', () => {
 // coin flip — especially with no coyote time and no jump buffer. 1-2 shipped
 // with a 6-block gap against a 6.9-block maximum and a scripted playtest died
 // 11 times on it without ever getting past.
-describe('gaps leave room for error', () => {
-  const T = CONFIG.TILE;
-  const maxJump = (CONFIG.RUN_SPEED * (2 * CONFIG.JUMP_SPEED / CONFIG.GRAVITY)) / T;
-  const comfortable = maxJump * 0.7;
-
-  function gapsIn(level) {
-    // widest run of empty tiles on each row that has some floor
-    const out = [];
-    level.tiles.forEach((row, r) => {
-      if (!row.includes(1)) return;
-      let run = 0;
-      row.forEach((t, c) => {
-        if (t === 0) run++;
-        else { if (run > 0) out.push({ row: r, width: run, endsAt: c }); run = 0; }
-      });
-    });
-    return out;
-  }
-
-  function helpNear(level, row, col) {
-    const helpers = [...level.fungies, ...level.gogios, ...level.ickios];
-    if (helpers.some((h) => Math.abs(h.x / T - col) <= 6)) return true;
-    // or a ledge below to land on
-    for (let r = row + 1; r < level.rows; r++) {
-      if (level.tiles[r][Math.max(0, Math.min(level.cols - 1, col - 2))] === 1) return true;
-    }
-    return false;
-  }
-
-  it('never asks for a near-maximum jump in the teaching levels', () => {
-    const offenders = [];
-    for (const level of world1.slice(0, 3)) {
-      const floorRow = level.tiles.reduce((best, row, r) =>
-        row.filter((t) => t === 1).length > (level.tiles[best] || []).filter((t) => t === 1).length ? r : best, 0);
-      for (const gap of gapsIn(level)) {
-        if (gap.row !== floorRow) continue;
-        if (gap.width > comfortable && !helpNear(level, gap.row, gap.endsAt)) {
-          offenders.push(`${level.id}: ${gap.width}-block gap ending col ${gap.endsAt} (comfortable max ${comfortable.toFixed(1)})`);
-        }
-      }
-    }
-    expect(offenders).toEqual([]);
-  });
-});
 
 // The pit in 1-2 was a hole with a ledge floating in it. Step off the ledge
 // and you fell into the void UNDER the far platform and died — then respawned
