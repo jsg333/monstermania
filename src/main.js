@@ -96,7 +96,7 @@ function tick(now, dt) {
         input.up = input.down = input.left = input.right = false;
       }
     } else if (scene === 'select') {
-      const chosen = levelSelect.update(sel, input, now);
+      const chosen = levelSelect.update(sel, input, now, view);
       levelSelect.draw(ctx, sel, view);
       if (sel.openMaker) {
         sel.openMaker = false;
@@ -106,6 +106,7 @@ function tick(now, dt) {
         scene = 'maker';
       } else if (chosen) {
         game = createState(chosen, sel.save.character);
+        input.pointerClick = false;
         clearedHandled = false;
         scene = 'play';
         input.jump = false;

@@ -5,13 +5,49 @@ import CONFIG from '../data/config.js';
 import { isUnlocked, totalGoo } from '../systems/save.js';
 import { drawCharacter } from '../render/sprites.js';
 
-export function update(sel, input, now) {
+// One source of truth for where the cards are, so what you SEE is exactly
+// what you can CLICK. Computing them twice is how they drift apart.
+export function cardRects(sel, view) {
+  const cardW = 132, cardH = 92, gap = 16;
+  const total = sel.levels.length * cardW + (sel.levels.length - 1) * gap;
+  const startX = view.w / 2 - total / 2;
+  const y = view.h / 2 - cardH / 2;
+  return sel.levels.map((lv, i) => ({
+    lv, i, x: startX + i * (cardW + gap), y, w: cardW, h: cardH
+  }));
+}
+
+export function hitCard(sel, view, px, py) {
+  return cardRects(sel, view).find(
+    (r) => px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h
+  ) || null;
+}
+
+export function update(sel, input, now, view) {
   if (now - sel.lastMove > 180) {
     if (input.right) { sel.index = Math.min(sel.levels.length - 1, sel.index + 1); sel.lastMove = now; }
     if (input.left) { sel.index = Math.max(0, sel.index - 1); sel.lastMove = now; }
   }
   if (input.up && now - sel.openedAt > 300) { sel.openMaker = true; return null; }
-  if (input.jump && now - sel.openedAt > 300 && isUnlocked(sel.save, sel.levels, sel.index)) {
+
+  // A click has to mean "this card", not "the card the keyboard is on".
+  // Every card looks like a button; clicking one and getting level 1-1 is a
+  // lie the interface tells you.
+  if (input.pointerClick) {
+    input.pointerClick = false;
+    const hit = view ? hitCard(sel, view, input.pointerX, input.pointerY) : null;
+    if (hit) {
+      sel.index = hit.i;
+      sel.lastMove = now;
+      if (isUnlocked(sel.save, sel.levels, hit.i)) return hit.lv;
+    }
+    return null;                       // clicking empty space does nothing
+  }
+
+  // Keyboard only from here — a mouse press must not launch the highlighted
+  // card from across the screen.
+  if (input.jump && !input.jumpFromPointer && now - sel.openedAt > 300 &&
+      isUnlocked(sel.save, sel.levels, sel.index)) {
     return sel.levels[sel.index];
   }
   return null;
@@ -40,13 +76,10 @@ export function draw(ctx, sel, view) {
     }
   }
 
-  const cardW = 132, cardH = 92, gap = 16;
-  const total = sel.levels.length * cardW + (sel.levels.length - 1) * gap;
-  const startX = view.w / 2 - total / 2;
-  const y = view.h / 2 - cardH / 2;
+  const rects = cardRects(sel, view);
+  const cardW = 132, cardH = 92;
 
-  sel.levels.forEach((lv, i) => {
-    const x = startX + i * (cardW + gap);
+  rects.forEach(({ lv, i, x, y }) => {
     const open = isUnlocked(sel.save, sel.levels, i);
     const chosen = i === sel.index;
 
@@ -77,7 +110,7 @@ export function draw(ctx, sel, view) {
 
   ctx.fillStyle = '#9cff6b';
   ctx.font = 'bold 15px system-ui, sans-serif';
-  ctx.fillText('← →  to choose      ANY other button to play      ↑  Monster Maker', view.w / 2, view.h - 60);
+  ctx.fillText('Click a level, or ← →  and any button      ↑  Monster Maker', view.w / 2, view.h - 60);
 
   // Which build am I actually running? Answering that by eye beats guessing.
   ctx.fillStyle = '#3f5a48';

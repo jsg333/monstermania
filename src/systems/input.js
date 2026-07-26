@@ -17,6 +17,10 @@ export function isJumpKey(code) {
 export function createInput(target = window) {
   const state = {
     left: false, right: false, up: false, down: false, confirm: false, escape: false,
+    // Where the mouse/finger is, and whether it was just pressed. Menus need
+    // real coordinates: cards look like buttons, so clicking one must pick
+    // THAT card rather than launching whatever the keyboard had highlighted.
+    pointerX: 0, pointerY: 0, pointerClick: false, jumpFromPointer: false,
     jump: false,             // is the button being held right now?
     jumpPressedAt: -Infinity, // when it was pressed
     jumpConsumed: true        // has this press already been used or thrown away?
@@ -34,7 +38,7 @@ export function createInput(target = window) {
     if (DOWN_KEYS.has(e.code)) { state.down = true; e.preventDefault(); }
     if (e.code === 'Enter') state.confirm = true;
     if (e.code === 'Escape') state.escape = true;
-    if (isJumpKey(e.code)) { held.add(e.code); press(performance.now()); e.preventDefault(); }
+    if (isJumpKey(e.code)) { state.jumpFromPointer = false; held.add(e.code); press(performance.now()); e.preventDefault(); }
   };
 
   const onKeyUp = (e) => {
@@ -51,14 +55,30 @@ export function createInput(target = window) {
   // Clicks inside a UI panel (like the tuning panel) must not make you jump.
   const inUI = (e) => e.target && e.target.closest && e.target.closest('#tune');
 
+  const onMouseMove = (e) => { state.pointerX = e.clientX; state.pointerY = e.clientY; };
+
   // Mouse: left OR right click both jump (Ethan asked for right click specifically).
-  const onMouseDown = (e) => { if (inUI(e)) return; held.add('mouse' + e.button); press(performance.now()); };
+  const onMouseDown = (e) => {
+    if (inUI(e)) return;
+    state.pointerX = e.clientX;
+    state.pointerY = e.clientY;
+    state.pointerClick = true;
+    state.jumpFromPointer = true;
+    held.add('mouse' + e.button);
+    press(performance.now());
+  };
   const onMouseUp = (e) => { held.delete('mouse' + e.button); if (held.size === 0) state.jump = false; };
   const onContextMenu = (e) => e.preventDefault();
 
   // Touch: left half of the screen steers, right half jumps.
   const onTouchStart = (e) => {
     if (inUI(e)) return;
+    if (e.changedTouches[0]) {
+      state.pointerX = e.changedTouches[0].clientX;
+      state.pointerY = e.changedTouches[0].clientY;
+      state.pointerClick = true;
+      state.jumpFromPointer = true;
+    }
     for (const t of e.changedTouches) {
       if (t.clientX < window.innerWidth * 0.25) state.left = true;
       else if (t.clientX < window.innerWidth * 0.5) state.right = true;
@@ -77,6 +97,7 @@ export function createInput(target = window) {
 
   target.addEventListener('keydown', onKeyDown);
   target.addEventListener('keyup', onKeyUp);
+  target.addEventListener('mousemove', onMouseMove);
   target.addEventListener('mousedown', onMouseDown);
   target.addEventListener('mouseup', onMouseUp);
   target.addEventListener('contextmenu', onContextMenu);
