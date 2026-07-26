@@ -47,7 +47,9 @@ let fps = 60;
 let clearedHandled = false;
 
 // A silent freeze just looks like "the game is broken". Show the problem.
+let lastError = null;
 function crashed(err) {
+  lastError = err;
   console.error('Monstermania crashed:', err);
   const w = ctx.canvas.width / (window.devicePixelRatio || 1);
   ctx.fillStyle = '#2a0f14';
@@ -100,12 +102,13 @@ function frame(now) {
 
   requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
+try { requestAnimationFrame(frame); } catch (err) { crashed(err); }
 
 // Testing hook. Lets a browser test read exact game state instead of trying
 // to guess it from pixel colours — which is unreliable and, when the reads
 // are expensive, actively slows the game down and produces false results.
 window.__mm = {
+  get lastError() { return lastError && (lastError.stack || String(lastError)); },
   get scene() { return scene; },
   get game() { return game; },
   get sel() { return sel; },

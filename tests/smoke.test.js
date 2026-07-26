@@ -66,3 +66,41 @@ describe('the game actually runs', () => {
     expect(Number.isFinite(state.player.y)).toBe(true);
   });
 });
+
+// The browser froze on the level-select screen while every unit test passed.
+// These run the menu and every real level through the actual scene code.
+describe('the menu and every World 1 level actually run', () => {
+  it('draws the level select without throwing', async () => {
+    const levelSelect = await import('../src/scenes/levelSelect.js');
+    const { blankSave } = await import('../src/systems/save.js');
+    const world1 = (await import('../src/data/levels/world1.js')).default;
+    const ctx = mockCtx();
+    const sel = { levels: world1, index: 0, lastMove: 0, openedAt: 0, save: blankSave() };
+    expect(() => levelSelect.draw(ctx, sel, { w: 1280, h: 720 })).not.toThrow();
+  });
+
+  it('lets you move the selection and pick a level', async () => {
+    const levelSelect = await import('../src/scenes/levelSelect.js');
+    const { blankSave } = await import('../src/systems/save.js');
+    const world1 = (await import('../src/data/levels/world1.js')).default;
+    const sel = { levels: world1, index: 0, lastMove: 0, openedAt: 0, save: blankSave() };
+    const pressing = { left: false, right: false, jump: true, jumpPressedAt: 0, jumpConsumed: false };
+    expect(levelSelect.update(sel, pressing, 5000)).toBe(world1[0]);
+  });
+
+  it('runs 400 frames of every World 1 level, boss included', async () => {
+    const world1 = (await import('../src/data/levels/world1.js')).default;
+    const ctx = mockCtx();
+    for (const level of world1) {
+      const state = createState(level);
+      let now = 1000;
+      expect(() => {
+        for (let i = 0; i < 400; i++) {
+          now += 16.7;
+          play.update(state, { ...noInput, right: i % 3 !== 0 }, 0.0167, now);
+          play.draw(ctx, state, 60);
+        }
+      }, `level ${level.id} crashed`).not.toThrow();
+    }
+  });
+});
