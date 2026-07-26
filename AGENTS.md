@@ -20,7 +20,9 @@ Cloudflare Pages project `monstermania`, direct upload via wrangler:
 npm run build && npm run deploy:cloudflare
 ```
 
-Not yet connected to GitHub for automatic deploys — that's a one-time step in the Cloudflare dashboard (Workers & Pages → monstermania → Settings → Builds → Connect to Git; build command `npm run build`, output `dist`). Until then, deploys are manual.
+**Note:** Cloudflare cannot add Git integration to an existing Pages project. A direct-upload project has no "Connect to Git" option — the only way to get auto-deploy is to delete the project and recreate it via **Create application → Pages → Import an existing Git repository**.
+
+Git-connected build settings: framework preset **None**, build command `npm run build`, output directory `dist`, production branch `main`, and env var `NODE_VERSION=20`. If a build ever fails with `vite: command not found`, the builder is omitting devDependencies — set `NODE_ENV=development`.
 
 ## Open design questions (Ethan answers these, not the assistant)
 
