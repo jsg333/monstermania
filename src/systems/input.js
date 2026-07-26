@@ -25,6 +25,7 @@ export function createInput(target = window) {
 
   const onKeyDown = (e) => {
     if (e.repeat) return;
+    if (inUI(e)) return;
     if (LEFT_KEYS.has(e.code)) { state.left = true; e.preventDefault(); return; }
     if (RIGHT_KEYS.has(e.code)) { state.right = true; e.preventDefault(); return; }
     if (isJumpKey(e.code)) { held.add(e.code); press(performance.now()); e.preventDefault(); }
@@ -37,13 +38,17 @@ export function createInput(target = window) {
     if (held.size === 0) state.jump = false;
   };
 
+  // Clicks inside a UI panel (like the tuning panel) must not make you jump.
+  const inUI = (e) => e.target && e.target.closest && e.target.closest('#tune');
+
   // Mouse: left OR right click both jump (Ethan asked for right click specifically).
-  const onMouseDown = (e) => { held.add('mouse' + e.button); press(performance.now()); };
+  const onMouseDown = (e) => { if (inUI(e)) return; held.add('mouse' + e.button); press(performance.now()); };
   const onMouseUp = (e) => { held.delete('mouse' + e.button); if (held.size === 0) state.jump = false; };
   const onContextMenu = (e) => e.preventDefault();
 
   // Touch: left half of the screen steers, right half jumps.
   const onTouchStart = (e) => {
+    if (inUI(e)) return;
     for (const t of e.changedTouches) {
       if (t.clientX < window.innerWidth * 0.25) state.left = true;
       else if (t.clientX < window.innerWidth * 0.5) state.right = true;

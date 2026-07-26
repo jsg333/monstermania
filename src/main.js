@@ -1,11 +1,13 @@
 import { createState } from './state.js';
 import { createInput } from './systems/input.js';
 import * as play from './scenes/play.js';
+import { createTuner } from './render/tuner.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const state = createState();
 const input = createInput(window);
+createTuner();
 
 function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
