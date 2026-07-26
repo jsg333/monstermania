@@ -337,7 +337,7 @@ describe('lethal gaps leave room for error', () => {
 
   function helpNear(level, col) {
     const helpers = [...level.fungies, ...level.gogios, ...level.ickios];
-    return helpers.some((h) => Math.abs(h.x / T - col) <= 8);
+    return helpers.some((h) => Math.abs(h.x / T - col) <= 12);  // a Fungy throw reaches ~11
   }
 
   it('never asks for a near-maximum jump over a deadly hole', () => {
@@ -448,21 +448,32 @@ describe('you can always leave a level', () => {
 // The pit in 1-2 was a hole with a ledge floating in it. Step off the ledge
 // and you fell into the void UNDER the far platform and died — then respawned
 // and ran straight back into it. It's a dip with a real floor now.
-describe('1-2 is a canyon you can always climb out of', () => {
-  it('has an unbroken floor at the bottom of the canyon', () => {
-    const l = world1[1];
-    const floor = l.tiles[16];
-    for (let c = 17; c <= 38; c++) {
-      expect(floor[c], `col ${c} of the canyon floor`).toBe(1);
-    }
+describe('1-2 is about the chasm Fungy throws you over', () => {
+  const T = CONFIG.TILE;
+
+  // The chasm is the FIRST gap after the near-side floor. Later empty space in
+  // that row is just sky beneath the far plateau, which nobody can stand in.
+  function chasmWidth(level, row) {
+    const cells = level.tiles[row];
+    let i = 1;
+    while (i < cells.length && cells[i] !== 1) i++;   // find the near floor
+    while (i < cells.length && cells[i] === 1) i++;   // walk to its end
+    let run = 0;
+    while (i < cells.length && cells[i] !== 1) { run++; i++; }
+    return run;
+  }
+
+  it('splits the canyon with a gap wider than any jump', () => {
+    const jumpReach = (CONFIG.RUN_SPEED * (2 * CONFIG.JUMP_SPEED / CONFIG.GRAVITY)) / T;
+    expect(chasmWidth(world1[1], 16)).toBeGreaterThan(jumpReach);
   });
 
-  it('gives you Fungy down there and stepping stones back up', () => {
-    const l = world1[1];
-    expect(l.fungies.length).toBeGreaterThan(0);
-    // some platform between the canyon floor and the far plateau
-    const midLedges = l.tiles.slice(9, 16).some((row) => row.includes(1));
-    expect(midLedges).toBe(true);
+  it('keeps the chasm inside what a Fungy throw can cover', () => {
+    expect(chasmWidth(world1[1], 16)).toBeLessThan(11);
+  });
+
+  it('puts Fungy on the near side, where you need him', () => {
+    expect(world1[1].fungies.length).toBeGreaterThan(0);
   });
 });
 

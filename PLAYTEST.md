@@ -20,43 +20,44 @@ Everything else is optional. These five are the ones I can't work out on my own.
 
 ### 1. Does dying feel annoying, or funny?
 
-Go somewhere hard and **die twenty times on purpose.** Count them.
+**Ethan: "funny"** ✅
 
-By death fifteen, are you still smiling, or do you want to quit?
-
-> Your answer:
+So the strict rules stay. No coyote time, no jump buffer — his call held up under
+twenty deaths, which is the only test that mattered. Nothing changes.
 
 ### 2. Is 1-3 (the tower) too hard?
 
-This is the one I'm most worried about. You have to bounce off Gogio three times to climb it, and Gogio's sides have spikes now.
+**Ethan: "no"** ✅
 
-Did you get stuck? Where exactly?
-
-> Your answer:
+The difficulty stack I'd been worried about — no coyote time, no jump buffer,
+and spiky monsters all at once — turned out to be fine. Leave it.
 
 ### 3. Is Big Gogio fun to fight?
 
-He squishes down for half a second before every jump — that's your warning. **Can you actually see it coming?**
+**Ethan: "It's difficult, but once you've beat it, it feels really good."** ✅
 
-Did beating him feel good, or did it just feel like it stopped?
-
-> Your answer:
+That's exactly what a boss should be. The half-second wind-up is readable enough
+to be fair. Don't touch him.
 
 ### 4. Which level is the best one? Which is the worst?
 
-Be honest about the worst one. A designer who can't name their weakest level can't fix it.
+**Ethan — Best: 1-4. Worst: 1-2.**
+**"1-4 is challenging but it's fun. But in 1-2 the Fungy doesn't have any purpose."**
 
-> Best:
->
-> Worst:
->
-> Why:
+That second sentence is the sharpest note in this whole document. He's right:
+1-2 is called *Meet Fungy*, and I built a canyon you can climb out of using
+ordinary jumps. The monster the level is named after was decoration.
+
+A level that teaches a monster has to make that monster **necessary**. Fixed —
+the only route out of the canyon is now a Fungy throw.
 
 ### 5. What's missing?
 
-You've played it now. What does it need that it hasn't got?
+**Ethan: "The ability to create new levels."** ✅
 
-> Your answer:
+Straight back to the first thing he ever wrote about this game — objects sorted
+into tabs for monsters, hazards and platforms. That's Phase 9, and it just
+became the next thing to build.
 
 ---
 

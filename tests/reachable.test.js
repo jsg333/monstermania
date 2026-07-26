@@ -21,7 +21,7 @@ const T = CONFIG.TILE;
 const JUMP_UP = Math.floor((CONFIG.JUMP_SPEED ** 2) / (2 * CONFIG.GRAVITY) / T);          // 4
 const JUMP_ACROSS = Math.floor((CONFIG.RUN_SPEED * (2 * CONFIG.JUMP_SPEED / CONFIG.GRAVITY)) / T * 0.8);  // ~5
 const GOGIO_UP = Math.floor((CONFIG.GOGIO_BOUNCE_SPEED ** 2) / (2 * CONFIG.GRAVITY) / T);
-const FUNGY_ACROSS = 8;
+const FUNGY_ACROSS = 10;   // he throws ~11 blocks; stay a shade conservative
 
 function solve(level) {
   const solid = (c, r) => r >= 0 && r < level.rows && c >= 0 && c < level.cols && level.tiles[r][c] === 1;
@@ -131,4 +131,33 @@ describe('every checkpoint can actually be used', () => {
       expect(unreachable).toEqual([]);
     });
   }
+});
+
+// Ethan's sharpest note from playtesting: "in 1-2 the Fungy doesn't have any
+// purpose." He was right — the level is NAMED after Fungy and you could climb
+// out of the canyon with ordinary jumps, so the monster was scenery.
+//
+// A level that teaches a monster has to make that monster necessary. The test
+// for that is blunt: take the monster out, and the level should become
+// impossible. If it's still winnable without him, he's decoration.
+describe('a level named after a monster actually needs that monster', () => {
+  const strip = (level, key) => ({ ...level, [key]: [] });
+
+  it('1-2 Meet Fungy is impossible without Fungy', () => {
+    const level = world1.find((l) => l.id === '1-2');
+    expect(canReach(level, level.exit), 'should be winnable normally').toBe(true);
+    expect(canReach(strip(level, 'fungies'), level.exit), 'Fungy is decoration!').toBe(false);
+  });
+
+  it('1-3 Meet Gogio is impossible without Gogio', () => {
+    const level = world1.find((l) => l.id === '1-3');
+    expect(canReach(level, level.exit)).toBe(true);
+    expect(canReach(strip(level, 'gogios'), level.exit), 'Gogio is decoration!').toBe(false);
+  });
+
+  it('1-5 Ickio! is impossible without Ickio', () => {
+    const level = world1.find((l) => l.id === '1-5');
+    expect(canReach(level, level.exit)).toBe(true);
+    expect(canReach(strip(level, 'ickios'), level.exit), 'Ickio is decoration!').toBe(false);
+  });
 });
