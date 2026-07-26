@@ -10,9 +10,9 @@
 import CONFIG from '../data/config.js';
 
 const SLIDERS = [
-  { key: 'GRAVITY',     label: 'Gravity',      min: 800,  max: 4000, step: 50,
+  { key: 'GRAVITY',     label: 'Gravity',      min: 800,  max: 7000, step: 50,
     hint: 'How hard the world pulls you down. Lower = floaty like the moon.' },
-  { key: 'JUMP_SPEED',  label: 'Jump power',   min: 300,  max: 1300, step: 10,
+  { key: 'JUMP_SPEED',  label: 'Jump power',   min: 300,  max: 1600, step: 10,
     hint: 'How hard you launch. Higher = bigger jump.' },
   { key: 'RUN_SPEED',   label: 'Run speed',    min: 100,  max: 600,  step: 10,
     hint: 'Your top running speed.' },
@@ -20,11 +20,16 @@ const SLIDERS = [
     hint: 'How small a quick tap is. At 1.0 tapping and holding are the same.' }
 ];
 
+// "Now" is captured from config.js at load, so it always means "what the game
+// really ships with" and can never go stale.
+const SHIPPED = { GRAVITY: CONFIG.GRAVITY, JUMP_SPEED: CONFIG.JUMP_SPEED,
+                  RUN_SPEED: CONFIG.RUN_SPEED, JUMP_CUTOFF: CONFIG.JUMP_CUTOFF };
+
 const PRESETS = {
   'Floaty':  { GRAVITY: 1400, JUMP_SPEED: 620, RUN_SPEED: 250, JUMP_CUTOFF: 0.40 },
-  'Lighter': { GRAVITY: 1700, JUMP_SPEED: 640, RUN_SPEED: 270, JUMP_CUTOFF: 0.38 },
-  'Now':     { GRAVITY: 2200, JUMP_SPEED: 700, RUN_SPEED: 260, JUMP_CUTOFF: 0.38 },
-  'Snappy':  { GRAVITY: 2800, JUMP_SPEED: 820, RUN_SPEED: 300, JUMP_CUTOFF: 0.30 }
+  'Softer':  { GRAVITY: 2600, JUMP_SPEED: 780, RUN_SPEED: 300, JUMP_CUTOFF: 0.30 },
+  'Now':     SHIPPED,
+  'Faster':  { GRAVITY: 5200, JUMP_SPEED: 1080, RUN_SPEED: 340, JUMP_CUTOFF: 0.1 }
 };
 
 // What the numbers actually MEAN, in things you can see on screen.
