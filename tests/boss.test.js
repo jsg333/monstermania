@@ -144,3 +144,27 @@ describe('Big Gogio', () => {
     expect(state.won).toBeTruthy();
   });
 });
+
+// The design doc promises World 1 is where "you basically can't fail".
+// A browser playtest died 11 times on 1-1, which is the exact opposite.
+describe('1-1 is genuinely safe, as the difficulty plan promises', () => {
+  it('has nothing in it that can hurt you', () => {
+    const l = world1[0];
+    expect(l.grumps).toHaveLength(0);
+    expect(l.gogios).toHaveLength(0);
+    expect(l.fungies).toHaveLength(0);
+  });
+
+  it('has a floor underneath every gap, so a missed jump costs a moment not a life', () => {
+    const l = world1[0];
+    const bottom = l.tiles[l.rows - 2];
+    const solid = bottom.filter((t) => t === 1).length;
+    expect(solid).toBeGreaterThan(l.cols * 0.9);
+  });
+
+  it('gives you a way back up out of each dip', () => {
+    const l = world1[0];
+    const rampRow = l.tiles[l.rows - 3];
+    expect(rampRow.some((t) => t === 1)).toBe(true);
+  });
+});
