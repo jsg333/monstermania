@@ -70,3 +70,58 @@ describe('levels do not all look the same', () => {
     expect(a1).not.toBe(b);       // different levels do not
   });
 });
+
+// A playtester asked "are those columns solid?" — which means the background
+// was speaking platform language. In a platformer a flat horizontal top edge
+// promises "stand here", and décor must never make that promise.
+describe('background décor cannot be mistaken for a platform', () => {
+  const bright = (hex) => {
+    const n = parseInt(hex.slice(1), 16);
+    return ((n >> 16) & 255) + ((n >> 8) & 255) + (n & 255);
+  };
+
+  it('keeps décor much dimmer than any real platform', async () => {
+    const { THEMES, WORLD_THEMES } = await import('../src/data/themes.js');
+    for (const key of WORLD_THEMES) {
+      const t = THEMES[key];
+      expect(bright(t.decorColor), `${t.name} décor vs block`).toBeLessThan(bright(t.block) * 0.75);
+      expect(bright(t.glowColor), `${t.name} glow vs block`).toBeLessThan(bright(t.block));
+    }
+  });
+
+  it('keeps décor close to the sky, so it reads as far away', async () => {
+    const { THEMES, WORLD_THEMES } = await import('../src/data/themes.js');
+    for (const key of WORLD_THEMES) {
+      const t = THEMES[key];
+      const gap = bright(t.decorColor) - bright(t.sky);
+      expect(gap, `${t.name}`).toBeGreaterThan(0);     // still visible
+      expect(gap, `${t.name}`).toBeLessThan(90);       // but not shouting
+    }
+  });
+
+  it('never draws a flat-topped rectangle in the background', async () => {
+    const { drawBackdrop } = await import('../src/render/backdrop.js');
+    const world1 = (await import('../src/data/levels/world1.js')).default;
+    const calls = [];
+    const ctx = new Proxy({ canvas: { width: 1280, height: 720 } }, {
+      get: (t, k) => (k in t ? t[k] : (...a) => calls.push(k)),
+      set: (t, k, v) => ((t[k] = v), true)
+    });
+    for (const level of world1) drawBackdrop(ctx, level, { x: 0, y: 0 }, { w: 1280, h: 720 });
+    // fillRect is the flat-topped shape. Curves and paths are fine.
+    expect(calls).not.toContain('fillRect');
+  });
+
+  it('draws décor behind the level, at a different speed to the world', async () => {
+    const { drawBackdrop } = await import('../src/render/backdrop.js');
+    const world1 = (await import('../src/data/levels/world1.js')).default;
+    const shifts = [];
+    const ctx = new Proxy({ canvas: { width: 1280, height: 720 } }, {
+      get: (t, k) => (k in t ? t[k] : (...a) => { if (k === 'translate') shifts.push(a[0]); }),
+      set: (t, k, v) => ((t[k] = v), true)
+    });
+    drawBackdrop(ctx, world1[0], { x: 500, y: 0 }, { w: 1280, h: 720 });
+    expect(Math.abs(shifts[0])).toBeGreaterThan(0);
+    expect(Math.abs(shifts[0])).toBeLessThan(500);   // slower than the world
+  });
+});

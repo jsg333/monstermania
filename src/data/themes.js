@@ -15,8 +15,8 @@ export const THEMES = {
     block: '#2f6b45',
     blockTop: '#4ea86a',
     decor: 'pipes',
-    decorColor: '#1b3d2a',
-    glowColor: '#2c5c3c'
+    decorColor: '#16301f',
+    glowColor: '#22492f'
   },
   gluetown: {
     id: 'gluetown',
@@ -26,8 +26,8 @@ export const THEMES = {
     block: '#7a5a2f',
     blockTop: '#c99a4e',
     decor: 'drips',
-    decorColor: '#3a2a15',
-    glowColor: '#5c4322'
+    decorColor: '#2f2415',
+    glowColor: '#463420'
   },
   cloudCastle: {
     id: 'cloudCastle',
@@ -37,8 +37,8 @@ export const THEMES = {
     block: '#4a5f8a',
     blockTop: '#8fa8dd',
     decor: 'clouds',
-    decorColor: '#222f4a',
-    glowColor: '#31406a'
+    decorColor: '#1c2740',
+    glowColor: '#28345a'
   },
   monsterMountain: {
     id: 'monsterMountain',
@@ -48,8 +48,8 @@ export const THEMES = {
     block: '#5c3160',
     blockTop: '#9b5aa6',
     decor: 'peaks',
-    decorColor: '#2c1a30',
-    glowColor: '#43264a'
+    decorColor: '#261729',
+    glowColor: '#382040'
   }
 };
 
