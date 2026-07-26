@@ -23,12 +23,6 @@ export function canJump(player, now, cfg = CONFIG) {
   return now - player.leftGroundAt <= cfg.COYOTE_TIME_MS;
 }
 
-// Same story: JUMP_BUFFER_MS is 0, so only a press this very frame counts.
-export function jumpRequested(input, now, cfg = CONFIG) {
-  if (!input.jump) return false;
-  return now - input.jumpPressedAt <= cfg.JUMP_BUFFER_MS;
-}
-
 export function horizontalStep(player, input, dt, cfg = CONFIG) {
   const dir = (input.right ? 1 : 0) - (input.left ? 1 : 0);
   const accel = player.onGround ? cfg.GROUND_ACCEL : cfg.AIR_ACCEL;
@@ -46,16 +40,19 @@ export function horizontalStep(player, input, dt, cfg = CONFIG) {
   return { ...player, vx, facing: dir !== 0 ? dir : player.facing };
 }
 
-export function verticalStep(player, input, dt, now, cfg = CONFIG) {
+// `jumpNow` is a single-shot "start a jump this frame" flag from takeJump().
+// `holding` is whether the button is still down (that's what makes a long
+// press jump higher than a tap).
+export function verticalStep(player, { jumpNow, holding }, dt, cfg = CONFIG) {
   let { vy, jumping } = player;
 
-  if (jumpRequested(input, now, cfg) && canJump(player, now, cfg)) {
+  if (jumpNow) {
     vy = -cfg.JUMP_SPEED;
     jumping = true;
   }
 
   // Hold longer = jump higher. Let go while rising and the jump gets cut short.
-  if (jumping && !input.jump && vy < 0) {
+  if (jumping && !holding && vy < 0) {
     vy *= cfg.JUMP_CUTOFF;
     jumping = false;
   }

@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import CONFIG from '../src/data/config.js';
 import {
-  createPlayer, canJump, jumpRequested, horizontalStep, verticalStep,
+  createPlayer, canJump, horizontalStep, verticalStep,
   teleportThroughIckio, speed
 } from '../src/systems/physics.js';
+import { takeJump } from '../src/systems/input.js';
 
 const NOW = 10_000;
-const noInput = { left: false, right: false, jump: false, jumpPressedAt: -Infinity };
-const jumpNow = { ...noInput, jump: true, jumpPressedAt: NOW };
+const noInput = { left: false, right: false, jump: false, jumpPressedAt: -Infinity, jumpConsumed: true };
+const pressed = () => ({ left: false, right: false, jump: true, jumpPressedAt: NOW, jumpConsumed: false });
 
 describe('running', () => {
   it('speeds up when you hold a direction', () => {
@@ -37,30 +38,55 @@ describe('running', () => {
 
 describe('jumping', () => {
   it('launches you upward off the ground', () => {
-    const p = verticalStep({ ...createPlayer(), onGround: true }, jumpNow, 0.016, NOW);
+    const p = verticalStep({ ...createPlayer(), onGround: true }, { jumpNow: true, holding: true }, 0.016);
     expect(p.vy).toBeLessThan(0);
   });
 
   it('does not launch you in mid-air', () => {
-    const p = verticalStep({ ...createPlayer(), onGround: false }, jumpNow, 0.016, NOW);
+    const p = verticalStep({ ...createPlayer(), onGround: false }, { jumpNow: false, holding: true }, 0.016);
     expect(p.vy).toBeGreaterThan(0); // gravity only
   });
 
   it('holding the button gets you higher than tapping it', () => {
     const rise = (hold) => {
       let p = { ...createPlayer(), onGround: true };
-      let y = 0, t = NOW;
-      p = verticalStep(p, jumpNow, 0.016, t);
+      let y = 0;
+      p = verticalStep(p, { jumpNow: true, holding: true }, 0.016);
       p = { ...p, onGround: false };
       for (let i = 0; i < 40; i++) {
-        t += 16;
-        const input = hold ? { ...jumpNow, jumpPressedAt: NOW } : { ...noInput };
-        p = verticalStep(p, input, 0.016, t);
+        p = verticalStep(p, { jumpNow: false, holding: hold }, 0.016);
         y += p.vy * 0.016;
       }
       return -y;
     };
     expect(rise(true)).toBeGreaterThan(rise(false));
+  });
+});
+
+// The bug Ethan caught by feel: "jump doesn't seem very responsive."
+// A key press happens between two animation frames, so the frame that reads
+// it is always a few milliseconds late. The old check demanded the press and
+// the frame share an exact timestamp, so about half of all jumps vanished.
+describe('a press made between frames still jumps', () => {
+  const grounded = { ...createPlayer(), onGround: true };
+
+  it('works even though the frame is 12ms after the press', () => {
+    const input = pressed();
+    expect(takeJump(input, canJump(grounded, NOW + 12, CONFIG), NOW + 12, CONFIG)).toBe(true);
+  });
+
+  it('works at any realistic frame delay', () => {
+    for (const lateBy of [0, 1, 4, 8, 12, 16, 33]) {
+      const input = pressed();
+      expect(takeJump(input, true, NOW + lateBy, CONFIG)).toBe(true);
+    }
+  });
+
+  it('gives you exactly one jump per press, not one per frame', () => {
+    const input = pressed();
+    expect(takeJump(input, true, NOW + 4, CONFIG)).toBe(true);
+    expect(takeJump(input, true, NOW + 20, CONFIG)).toBe(false);
+    expect(takeJump(input, true, NOW + 36, CONFIG)).toBe(false);
   });
 });
 
@@ -73,9 +99,20 @@ describe("Ethan's rulings", () => {
     expect(canJump(airborne, NOW)).toBe(false);
   });
 
-  it('has NO jump buffer — a press before landing is not remembered', () => {
+  it('has NO jump buffer — a press made in mid-air is thrown away', () => {
     expect(CONFIG.JUMP_BUFFER_MS).toBe(0);
-    expect(jumpRequested({ ...jumpNow, jumpPressedAt: NOW - 50 }, NOW)).toBe(false);
+    const input = pressed();
+    // Pressed while falling: not allowed, so the press is discarded...
+    expect(takeJump(input, false, NOW + 8, CONFIG)).toBe(false);
+    // ...and landing a moment later does NOT cash it in.
+    expect(takeJump(input, true, NOW + 60, CONFIG)).toBe(false);
+  });
+
+  it('would remember the press if the buffer were switched on', () => {
+    const input = pressed();
+    const withBuffer = { ...CONFIG, JUMP_BUFFER_MS: 120 };
+    expect(takeJump(input, false, NOW + 8, withBuffer)).toBe(false);
+    expect(takeJump(input, true, NOW + 60, withBuffer)).toBe(true);
   });
 
   it('respawns in well under a second', () => {

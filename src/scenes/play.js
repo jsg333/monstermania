@@ -2,14 +2,17 @@
 // The ONLY question this scene has to answer is "does the jump feel good?"
 
 import CONFIG from '../data/config.js';
-import { horizontalStep, verticalStep } from '../systems/physics.js';
+import { horizontalStep, verticalStep, canJump } from '../systems/physics.js';
+import { takeJump } from '../systems/input.js';
 import { moveAndCollide, isSolid } from '../systems/collision.js';
 import { drawFps, drawHint } from '../render/ui.js';
 
 export function update(state, input, dt, now) {
   let p = state.player;
   p = horizontalStep(p, input, dt, CONFIG);
-  p = verticalStep(p, input, dt, now, CONFIG);
+
+  const jumpNow = takeJump(input, canJump(p, now, CONFIG), now, CONFIG);
+  p = verticalStep(p, { jumpNow, holding: input.jump }, dt, CONFIG);
 
   const wasOnGround = p.onGround;
   p = moveAndCollide(p, state.level, dt, CONFIG);

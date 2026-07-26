@@ -13,10 +13,15 @@ export function isJumpKey(code) {
 }
 
 export function createInput(target = window) {
-  const state = { left: false, right: false, jump: false, jumpPressedAt: -Infinity };
+  const state = {
+    left: false, right: false,
+    jump: false,             // is the button being held right now?
+    jumpPressedAt: -Infinity, // when it was pressed
+    jumpConsumed: true        // has this press already been used or thrown away?
+  };
   const held = new Set();
 
-  const press = (now) => { state.jump = true; state.jumpPressedAt = now; };
+  const press = (now) => { state.jump = true; state.jumpPressedAt = now; state.jumpConsumed = false; };
 
   const onKeyDown = (e) => {
     if (e.repeat) return;
@@ -65,4 +70,30 @@ export function createInput(target = window) {
   target.addEventListener('blur', () => { held.clear(); state.left = state.right = state.jump = false; });
 
   return state;
+}
+
+// Ask the input system for a jump. Returns true exactly once per press.
+//
+// This is the fix for "the jump feels unresponsive". A key press happens
+// BETWEEN two animation frames, so by the time the game looks at it, a
+// millisecond or two has already gone by. The old code demanded the press
+// land in the same instant as the frame, which happened only by luck — so
+// roughly half of Ethan's jumps were being thrown on the floor.
+//
+// Now a press waits until the game asks for it. Ethan's rule still holds:
+// with JUMP_BUFFER_MS at 0, a press made in mid-air is thrown away
+// immediately instead of being saved up for landing. If you do not jump in
+// time, you fall. It just no longer loses presses you actually made in time.
+export function takeJump(input, allowed, now, cfg) {
+  if (input.jumpConsumed) return false;
+
+  if (allowed) {
+    input.jumpConsumed = true;
+    return true;
+  }
+
+  // Couldn't jump this frame. Keep the press only for as long as the
+  // buffer allows (0ms by default = not at all).
+  if (now - input.jumpPressedAt > cfg.JUMP_BUFFER_MS) input.jumpConsumed = true;
+  return false;
 }
