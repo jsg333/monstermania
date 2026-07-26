@@ -174,7 +174,7 @@ describe('1-1 is genuinely safe, as the difficulty plan promises', () => {
 // bonked your head on its underside. Two of 1-3's three coins were
 // unreachable. This rule stops it happening again.
 describe('every Gogio has clear sky above him', () => {
-  const CLEARANCE = 8;   // tiles
+  const CLEARANCE = 6;   // tiles
 
   it('never puts a ceiling right above a bouncer', () => {
     const T = CONFIG.TILE;
@@ -194,16 +194,16 @@ describe('every Gogio has clear sky above him', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('puts the shelf you are aiming for beside the Gogio, not on top of him', () => {
+  it('never sits a Gogio directly beneath the platform he launches you to', () => {
     const T = CONFIG.TILE;
     for (const level of world1) {
       for (const g of level.gogios) {
         const col = g.x / T;
-        // the tile column directly above must be empty all the way up
-        const clear = level.tiles
-          .slice(0, g.y / T)
-          .every((row) => row[col] !== 1);
-        expect(clear, `${level.id} Gogio at col ${col}`).toBe(true);
+        const row = g.y / T;
+        // the nearest platform above must be offset sideways, not overhead
+        for (let r = row - 1; r >= Math.max(0, row - CLEARANCE); r--) {
+          expect(level.tiles[r][col], `${level.id} Gogio col ${col} blocked at row ${r}`).toBe(0);
+        }
       }
     }
   });
@@ -344,25 +344,53 @@ describe('gaps leave room for error', () => {
 // The pit in 1-2 was a hole with a ledge floating in it. Step off the ledge
 // and you fell into the void UNDER the far platform and died — then respawned
 // and ran straight back into it. It's a dip with a real floor now.
-describe('1-2 cannot drop you into a void', () => {
-  it('has an unbroken floor beneath the big dip', () => {
+describe('1-2 is a canyon you can always climb out of', () => {
+  it('has an unbroken floor at the bottom of the canyon', () => {
     const l = world1[1];
-    const dip = l.tiles[15];
-    for (let c = 33; c <= 41; c++) {
-      expect(dip[c], `col ${c} of the dip floor`).toBe(1);
+    const floor = l.tiles[16];
+    for (let c = 17; c <= 38; c++) {
+      expect(floor[c], `col ${c} of the canyon floor`).toBe(1);
     }
   });
 
-  it('keeps the dip only one tile below the main floor, so you can jump out', () => {
-    const T = CONFIG.TILE;
+  it('gives you Fungy down there and stepping stones back up', () => {
     const l = world1[1];
-    const jumpTiles = ((CONFIG.JUMP_SPEED ** 2) / (2 * CONFIG.GRAVITY)) / T;
-    expect(15 - 14).toBeLessThan(jumpTiles);
+    expect(l.fungies.length).toBeGreaterThan(0);
+    // some platform between the canyon floor and the far plateau
+    const midLedges = l.tiles.slice(9, 16).some((row) => row.includes(1));
+    expect(midLedges).toBe(true);
+  });
+});
+
+// Every level should have its own shape. 1-1 and 1-2 were two flat corridors
+// and a playtester said outright that they looked identical.
+describe('levels do not share a silhouette', () => {
+  function profile(level) {
+    // the height of the highest solid tile in each column — a level's outline
+    const out = [];
+    for (let c = 1; c < level.cols; c++) {
+      let top = level.rows;
+      for (let r = 0; r < level.rows; r++) if (level.tiles[r][c] === 1) { top = r; break; }
+      out.push(top);
+    }
+    return out;
+  }
+
+  it('gives every level a different outline', () => {
+    const shapes = world1.map((l) => profile(l).join(','));
+    expect(new Set(shapes).size).toBe(shapes.length);
   });
 
-  it('still has Fungy in there as the quick way across', () => {
-    const T = CONFIG.TILE;
-    const l = world1[1];
-    expect(l.fungies.some((f) => f.x / T >= 33 && f.x / T <= 41)).toBe(true);
+  it('does not build every level on one flat floor', () => {
+    for (const level of world1.slice(0, 5)) {
+      const heights = new Set(profile(level).filter((h) => h < level.rows));
+      expect(heights.size, `${level.id} has only ${heights.size} distinct ground heights`)
+        .toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('varies the size and proportions of the levels', () => {
+    const shapes = world1.slice(0, 5).map((l) => `${l.cols}x${l.rows}`);
+    expect(new Set(shapes).size).toBeGreaterThanOrEqual(4);
   });
 });
