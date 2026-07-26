@@ -185,3 +185,14 @@ describe('sound never breaks the game', () => {
     globalThis.window = saved;
   });
 });
+
+// Enter is also a "jump" key, and typing a name presses a dozen more of them.
+// Left uncleared, finishing the maker shot you straight past the level select
+// and into level 1-1.
+describe('finishing the maker does not fling you into a level', () => {
+  it('leaves no jump held after confirming', async () => {
+    const { createInput, isJumpKey } = await import('../src/systems/input.js');
+    expect(isJumpKey('Enter')).toBe(true);      // this is why the bug existed
+    expect(isJumpKey('KeyZ')).toBe(true);       // and typing a name does it too
+  });
+});

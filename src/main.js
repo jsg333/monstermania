@@ -87,13 +87,20 @@ function tick(now, dt) {
         maker.goo = totalGoo(sel.save);
         scene = 'select';
         sel.openedAt = now;
+        // Enter counts as a jump too, and typing a name pressed a lot of
+        // "jump" keys. Without clearing them, holding Enter would shoot you
+        // straight past the level select and into level 1-1.
         input.confirm = false;
+        input.jump = false;
+        input.jumpConsumed = true;
+        input.up = input.down = input.left = input.right = false;
       }
     } else if (scene === 'select') {
       const chosen = levelSelect.update(sel, input, now);
       levelSelect.draw(ctx, sel, view);
       if (sel.openMaker) {
         sel.openMaker = false;
+        input.up = false;
         maker.goo = totalGoo(sel.save);
         maker.character = { ...(sel.save.character || maker.character) };
         scene = 'maker';
