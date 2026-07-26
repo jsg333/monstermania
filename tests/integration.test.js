@@ -5,14 +5,18 @@ import * as play from '../src/scenes/play.js';
 
 // Run the real game loop for a while and see where the player ends up.
 // This is the closest thing to actually playing it without a browser.
-function simulate(state, { right = false, left = false, frames = 200, startNow = 1000 }) {
+function simulate(state, { right = false, left = false, frames = 200, startNow = 1000, jumpAtFrame = null, holdJumpFor = 30 }) {
   let now = startNow;
   const input = { left, right, jump: false, jumpPressedAt: -Infinity, jumpConsumed: true };
   const track = [];
   for (let i = 0; i < frames; i++) {
     now += 16.7;
+    if (jumpAtFrame !== null && i === jumpAtFrame) {
+      input.jump = true; input.jumpPressedAt = now; input.jumpConsumed = false;
+    }
+    if (jumpAtFrame !== null && i === jumpAtFrame + holdJumpFor) input.jump = false;
     play.update(state, input, 0.0167, now);
-    track.push({ x: state.player.x, y: state.player.y, dead: !!state.deadUntil });
+    track.push({ x: state.player.x, y: state.player.y, dead: !!state.deadUntil, deaths: state.deaths });
   }
   return track;
 }
@@ -20,6 +24,34 @@ function simulate(state, { right = false, left = false, frames = 200, startNow =
 beforeAll(() => { globalThis.window = { devicePixelRatio: 1 }; });
 
 const T = CONFIG.TILE;
+
+// The pit is the playground's one real puzzle, so its rules are worth pinning
+// down: strolling off the edge must NOT work, and any jump must.
+describe('the pit demands a jump, not a stroll', () => {
+  const edgeX = 21 * T - 24;          // standing on the last floor tile
+
+  it('kills you if you just walk off the edge', () => {
+    const state = createState();
+    state.player = { ...state.player, x: edgeX, y: 18 * T, vx: CONFIG.RUN_SPEED, vy: 0, facing: 1, onGround: true };
+    const track = simulate(state, { right: true, frames: 120 });
+    expect(track.some((t) => t.dead)).toBe(true);
+  });
+
+  it('lets you reach the ledge if you jump off the edge', () => {
+    const state = createState();
+    state.player = { ...state.player, x: edgeX, y: 18 * T, vx: CONFIG.RUN_SPEED, vy: 0, facing: 1, onGround: true };
+    const track = simulate(state, { right: true, frames: 90, jumpAtFrame: 0 });
+    const ledgeStartsAt = 26 * T;
+    const landedSafely = track.some((t) => !t.dead && t.x > ledgeStartsAt && t.y > 19 * T);
+    expect(landedSafely).toBe(true);
+  });
+
+  it('cannot be jumped in one go — the gap is wider than any jump', () => {
+    const reach = CONFIG.RUN_SPEED * (2 * CONFIG.JUMP_SPEED / CONFIG.GRAVITY);
+    const gapWidth = (31 - 22) * T;
+    expect(gapWidth).toBeGreaterThan(reach);
+  });
+});
 
 describe('Fungy gets you across the pit you cannot jump', () => {
   it('throws you forward and up when you fall onto him', () => {
@@ -40,7 +72,7 @@ describe('Fungy gets you across the pit you cannot jump', () => {
     const f = state.level.fungies[0];
     const pitEndsAt = 31 * T;                              // floor starts again here
 
-    state.player = { ...state.player, x: f.x - 40, y: f.y - 120, vx: CONFIG.RUN_SPEED, vy: 200, facing: 1, onGround: false };
+    state.player = { ...state.player, x: f.x, y: f.y - 60, vx: CONFIG.RUN_SPEED, vy: 300, facing: 1, onGround: false };
     const track = simulate(state, { right: true, frames: 160 });
 
     // Furthest point reached — he keeps running afterwards and eventually

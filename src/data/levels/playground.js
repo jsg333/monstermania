@@ -4,8 +4,14 @@
 //
 // Two things here are impossible without a monster, which is the whole point
 // of Monstermania:
-//   * the wide pit is far too wide to jump — fall in and let Fungy throw you
-//   * the high shelf is far too high to reach — bounce off Gogio
+//
+//   * The 9-block pit is far wider than you can jump (you top out near 6.9).
+//     Walking off the edge drops you straight past the ledge and you die.
+//     JUMP off the edge, land on the ledge below, hop on Fungy, and he
+//     throws you clear across.
+//
+//   * The high shelf is far above your 4.3-block jump. Land on Gogio's head
+//     and he launches you over it.
 //
 // 1 block  ^ Grump  S Snoozer  f Fungy  g Gogio  P start
 
@@ -32,8 +38,8 @@ const MAP = `
 1.............................................................................
 1P.S.....^^.....................S.^^.........g.....S....^^.....S....^.........
 1111111111111111111111.........1111111111111111...111111111111111111111111111.
-1.........................f...................................................
-1.......................11111.................................................
+1............................f................................................
+1.........................111111..............................................
 `;
 
 export const playground = parseLevel('Playground', MAP);
