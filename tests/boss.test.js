@@ -229,3 +229,65 @@ describe('Goo Drops sit somewhere a player could actually get to', () => {
     }
   });
 });
+
+// 1-2 shipped with a checkpoint floating over a pit. Touch it mid-jump and it
+// became your respawn point — so every later death dropped you into the void
+// and killed you again, forever. The level was literally unwinnable.
+//
+// A checkpoint IS a promise that you'll be safe when you come back.
+describe('every checkpoint is somewhere safe to reappear', () => {
+  it('never floats a Snoozer over a pit', async () => {
+    const { playground } = await import('../src/data/levels/playground.js');
+    const T = CONFIG.TILE;
+    const bad = [];
+    for (const level of [...world1, playground]) {
+      for (const s of level.snoozers) {
+        const col = s.x / T, row = s.y / T;
+        let floor = null;
+        for (let r = row + 1; r < level.rows; r++) {
+          if (level.tiles[r][col] === 1) { floor = r; break; }
+        }
+        if (floor === null) bad.push(`${level.id || 'playground'}: Snoozer col ${col} has NOTHING below it`);
+        else if (floor - row > 1) bad.push(`${level.id || 'playground'}: Snoozer col ${col} floats ${floor - row} tiles up`);
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('never puts a Snoozer where a Grump can reach you on respawn', () => {
+    const T = CONFIG.TILE;
+    const bad = [];
+    for (const level of world1) {
+      for (const s of level.snoozers) {
+        for (const g of level.grumps) {
+          if (Math.abs(g.x - s.x) < T && Math.abs(g.y - s.y) < T) {
+            bad.push(`${level.id}: Snoozer and Grump on top of each other at col ${s.x / T}`);
+          }
+        }
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+// There was no way out of a level except finishing it. A kid stuck on a hard
+// jump — or on an unwinnable one — had to reload the page.
+describe('you can always leave a level', () => {
+  it('goes back to the menu when you press Escape', async () => {
+    const play = await import('../src/scenes/play.js');
+    const { createState } = await import('../src/state.js');
+    const state = createState(world1[2]);
+    const input = { left: false, right: false, jump: false, escape: true, jumpPressedAt: -1e9, jumpConsumed: true };
+    play.update(state, input, 0.0167, 1000);
+    expect(state.backToSelect).toBe(true);
+  });
+
+  it('does not leave when you are just playing', async () => {
+    const play = await import('../src/scenes/play.js');
+    const { createState } = await import('../src/state.js');
+    const state = createState(world1[2]);
+    const input = { left: false, right: true, jump: false, escape: false, jumpPressedAt: -1e9, jumpConsumed: true };
+    play.update(state, input, 0.0167, 1000);
+    expect(state.backToSelect).toBeFalsy();
+  });
+});

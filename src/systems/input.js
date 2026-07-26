@@ -16,7 +16,7 @@ export function isJumpKey(code) {
 
 export function createInput(target = window) {
   const state = {
-    left: false, right: false, up: false, down: false, confirm: false,
+    left: false, right: false, up: false, down: false, confirm: false, escape: false,
     jump: false,             // is the button being held right now?
     jumpPressedAt: -Infinity, // when it was pressed
     jumpConsumed: true        // has this press already been used or thrown away?
@@ -33,6 +33,7 @@ export function createInput(target = window) {
     if (UP_KEYS.has(e.code)) { state.up = true; e.preventDefault(); }
     if (DOWN_KEYS.has(e.code)) { state.down = true; e.preventDefault(); }
     if (e.code === 'Enter') state.confirm = true;
+    if (e.code === 'Escape') state.escape = true;
     if (isJumpKey(e.code)) { held.add(e.code); press(performance.now()); e.preventDefault(); }
   };
 
@@ -42,6 +43,7 @@ export function createInput(target = window) {
     if (UP_KEYS.has(e.code)) state.up = false;
     if (DOWN_KEYS.has(e.code)) state.down = false;
     if (e.code === 'Enter') state.confirm = false;
+    if (e.code === 'Escape') state.escape = false;
     held.delete(e.code);
     if (held.size === 0) state.jump = false;
   };

@@ -19,6 +19,12 @@ export function update(state, input, dt, now) {
   state.puff = stepPuff(state.puff, dt);
   state.time = now;
 
+  // Never trap a player in a level they can't finish.
+  if (input.escape) {
+    state.backToSelect = true;
+    return state;
+  }
+
   // Won? Freeze the world until they press a button to play again.
   if (state.won) {
     if (input.jump && now - state.won > 800) {
@@ -145,7 +151,7 @@ export function draw(ctx, state, fps) {
   ctx.restore();
 
   drawFps(ctx, fps);
-  drawHint(ctx, 'Arrows or A/D to move  ·  ANY other button to jump  ·  land on TOP of a monster — his sides have spikes!', view.h - 40);
+  drawHint(ctx, 'Arrows or A/D to move  ·  ANY other button to jump  ·  land on TOP of a monster — his sides have spikes!  ·  ESC = menu', view.h - 40);
   const totalGoo = level.gooDrops.length;
   drawHint(ctx, `Restarts: ${state.deaths}   ·   Goo Drops: ${state.gooDrops} / ${totalGoo}`, view.h - 20);
 
