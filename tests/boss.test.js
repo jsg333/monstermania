@@ -340,3 +340,29 @@ describe('gaps leave room for error', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+// The pit in 1-2 was a hole with a ledge floating in it. Step off the ledge
+// and you fell into the void UNDER the far platform and died — then respawned
+// and ran straight back into it. It's a dip with a real floor now.
+describe('1-2 cannot drop you into a void', () => {
+  it('has an unbroken floor beneath the big dip', () => {
+    const l = world1[1];
+    const dip = l.tiles[15];
+    for (let c = 33; c <= 41; c++) {
+      expect(dip[c], `col ${c} of the dip floor`).toBe(1);
+    }
+  });
+
+  it('keeps the dip only one tile below the main floor, so you can jump out', () => {
+    const T = CONFIG.TILE;
+    const l = world1[1];
+    const jumpTiles = ((CONFIG.JUMP_SPEED ** 2) / (2 * CONFIG.GRAVITY)) / T;
+    expect(15 - 14).toBeLessThan(jumpTiles);
+  });
+
+  it('still has Fungy in there as the quick way across', () => {
+    const T = CONFIG.TILE;
+    const l = world1[1];
+    expect(l.fungies.some((f) => f.x / T >= 33 && f.x / T <= 41)).toBe(true);
+  });
+});

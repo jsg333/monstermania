@@ -14,6 +14,7 @@ import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff, drawGogio, dra
 import { drawFps, drawHint } from '../render/ui.js';
 import { sfx } from '../systems/sound.js';
 import { themeFor } from '../data/themes.js';
+import { drawBackdrop } from '../render/backdrop.js';
 
 export function update(state, input, dt, now) {
   state.puff = stepPuff(state.puff, dt);
@@ -132,6 +133,8 @@ export function draw(ctx, state, fps) {
 
   ctx.fillStyle = themeFor(level).sky;
   ctx.fillRect(0, 0, view.w, view.h);
+
+  drawBackdrop(ctx, level, state.cam, view);
 
   ctx.save();
   ctx.translate(-Math.round(state.cam.x), -Math.round(state.cam.y));

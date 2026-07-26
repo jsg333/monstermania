@@ -13,7 +13,10 @@ export const THEMES = {
     blurb: 'Green goo, pipes and bubbling tanks',
     sky: '#10241a',
     block: '#2f6b45',
-    blockTop: '#4ea86a'
+    blockTop: '#4ea86a',
+    decor: 'pipes',
+    decorColor: '#1b3d2a',
+    glowColor: '#2c5c3c'
   },
   gluetown: {
     id: 'gluetown',
@@ -21,7 +24,10 @@ export const THEMES = {
     blurb: 'Everything sticks — walls are floors here',
     sky: '#241a10',
     block: '#7a5a2f',
-    blockTop: '#c99a4e'
+    blockTop: '#c99a4e',
+    decor: 'drips',
+    decorColor: '#3a2a15',
+    glowColor: '#5c4322'
   },
   cloudCastle: {
     id: 'cloudCastle',
@@ -29,7 +35,10 @@ export const THEMES = {
     blurb: 'High, floaty and a long way down',
     sky: '#141d2e',
     block: '#4a5f8a',
-    blockTop: '#8fa8dd'
+    blockTop: '#8fa8dd',
+    decor: 'clouds',
+    decorColor: '#222f4a',
+    glowColor: '#31406a'
   },
   monsterMountain: {
     id: 'monsterMountain',
@@ -37,7 +46,10 @@ export const THEMES = {
     blurb: 'Everything at once. Good luck.',
     sky: '#1d1220',
     block: '#5c3160',
-    blockTop: '#9b5aa6'
+    blockTop: '#9b5aa6',
+    decor: 'peaks',
+    decorColor: '#2c1a30',
+    glowColor: '#43264a'
   }
 };
 
