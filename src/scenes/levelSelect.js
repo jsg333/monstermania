@@ -3,12 +3,14 @@
 
 import CONFIG from '../data/config.js';
 import { isUnlocked, totalGoo } from '../systems/save.js';
+import { drawCharacter } from '../render/sprites.js';
 
 export function update(sel, input, now) {
   if (now - sel.lastMove > 180) {
     if (input.right) { sel.index = Math.min(sel.levels.length - 1, sel.index + 1); sel.lastMove = now; }
     if (input.left) { sel.index = Math.max(0, sel.index - 1); sel.lastMove = now; }
   }
+  if (input.up && now - sel.openedAt > 300) { sel.openMaker = true; return null; }
   if (input.jump && now - sel.openedAt > 300 && isUnlocked(sel.save, sel.levels, sel.index)) {
     return sel.levels[sel.index];
   }
@@ -28,6 +30,15 @@ export function draw(ctx, sel, view) {
   ctx.font = '15px system-ui, sans-serif';
   ctx.fillText('World 1 — Slime Lab', view.w / 2, 120);
   ctx.fillText(`Goo Drops collected: ${totalGoo(sel.save)}`, view.w / 2, 144);
+
+  if (sel.save.character) {
+    drawCharacter(ctx, sel.save.character, view.w / 2 - 18, 168, 36, 48, 1);
+    if (sel.save.character.name) {
+      ctx.fillStyle = '#dfffcb';
+      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.fillText(sel.save.character.name, view.w / 2, 236);
+    }
+  }
 
   const cardW = 132, cardH = 92, gap = 16;
   const total = sel.levels.length * cardW + (sel.levels.length - 1) * gap;
@@ -66,6 +77,6 @@ export function draw(ctx, sel, view) {
 
   ctx.fillStyle = '#9cff6b';
   ctx.font = 'bold 15px system-ui, sans-serif';
-  ctx.fillText('← →  to choose      ANY other button to play', view.w / 2, view.h - 60);
+  ctx.fillText('← →  to choose      ANY other button to play      ↑  Monster Maker', view.w / 2, view.h - 60);
   ctx.textAlign = 'left';
 }

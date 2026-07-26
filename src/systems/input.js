@@ -3,7 +3,9 @@
 
 const LEFT_KEYS = new Set(['ArrowLeft', 'KeyA']);
 const RIGHT_KEYS = new Set(['ArrowRight', 'KeyD']);
-// These do nothing, so they must not count as "any button".
+const UP_KEYS = new Set(['ArrowUp', 'KeyW']);
+const DOWN_KEYS = new Set(['ArrowDown', 'KeyS']);
+// These do nothing in-game, so they must not count as "any button".
 const IGNORED = new Set(['ArrowUp', 'ArrowDown', 'KeyW', 'KeyS', 'Tab', 'Escape', 'F5', 'F11']);
 
 export function isJumpKey(code) {
@@ -14,7 +16,7 @@ export function isJumpKey(code) {
 
 export function createInput(target = window) {
   const state = {
-    left: false, right: false,
+    left: false, right: false, up: false, down: false, confirm: false,
     jump: false,             // is the button being held right now?
     jumpPressedAt: -Infinity, // when it was pressed
     jumpConsumed: true        // has this press already been used or thrown away?
@@ -28,12 +30,18 @@ export function createInput(target = window) {
     if (inUI(e)) return;
     if (LEFT_KEYS.has(e.code)) { state.left = true; e.preventDefault(); return; }
     if (RIGHT_KEYS.has(e.code)) { state.right = true; e.preventDefault(); return; }
+    if (UP_KEYS.has(e.code)) { state.up = true; e.preventDefault(); }
+    if (DOWN_KEYS.has(e.code)) { state.down = true; e.preventDefault(); }
+    if (e.code === 'Enter') state.confirm = true;
     if (isJumpKey(e.code)) { held.add(e.code); press(performance.now()); e.preventDefault(); }
   };
 
   const onKeyUp = (e) => {
     if (LEFT_KEYS.has(e.code)) { state.left = false; return; }
     if (RIGHT_KEYS.has(e.code)) { state.right = false; return; }
+    if (UP_KEYS.has(e.code)) state.up = false;
+    if (DOWN_KEYS.has(e.code)) state.down = false;
+    if (e.code === 'Enter') state.confirm = false;
     held.delete(e.code);
     if (held.size === 0) state.jump = false;
   };

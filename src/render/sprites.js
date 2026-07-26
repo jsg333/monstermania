@@ -8,6 +8,7 @@
 import CONFIG from '../data/config.js';
 import { isSolid } from '../systems/collision.js';
 import { squashAmount, tiredAmount } from '../systems/bouncers.js';
+import { BODIES, COLORS, EYES, MOUTHS, HATS } from '../data/parts.js';
 
 export function drawLevel(ctx, level, cam, view, cfg = CONFIG) {
   const T = cfg.TILE;
@@ -294,7 +295,114 @@ export function drawBigIckio(ctx, exit, time, cfg = CONFIG) {
   ctx.textAlign = 'left';
 }
 
-export function drawPlayer(ctx, p) {
+// Draw a character the player built in the Monster Maker. Used for the
+// player sprite in-game and for the big preview in the maker itself.
+export function drawCharacter(ctx, ch, x, y, w, h, facing = 1) {
+  const body = BODIES[ch.body] || BODIES[0];
+  const colour = (COLORS[ch.color] || COLORS[0]).id;
+  const eyes = (EYES[ch.eyes] || EYES[0]).id;
+  const mouth = (MOUTHS[ch.mouth] || MOUTHS[0]).id;
+  const hat = (HATS[ch.hat] || HATS[0]).id;
+
+  const cx = x + w / 2;
+  ctx.fillStyle = colour;
+
+  if (body.id === 'round') {
+    ctx.beginPath();
+    ctx.ellipse(cx, y + h * 0.55, w * 0.5, h * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (body.id === 'tall') {
+    ctx.fillRect(x + w * 0.15, y, w * 0.7, h);
+  } else if (body.id === 'blob') {
+    ctx.beginPath();
+    ctx.moveTo(x, y + h);
+    ctx.quadraticCurveTo(x - w * 0.1, y + h * 0.2, cx, y);
+    ctx.quadraticCurveTo(x + w * 1.1, y + h * 0.2, x + w, y + h);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.fillRect(x, y, w, h);
+  }
+
+  const ex = cx + facing * w * 0.10;
+  const ey = y + h * 0.34;
+  const s = w / 24;                       // scale everything off a 24px-wide body
+
+  ctx.fillStyle = '#14140f';
+  if (eyes === 'big') {
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(ex - 4 * s, ey, 4 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ex + 4 * s, ey, 4 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#14140f';
+    ctx.beginPath(); ctx.arc(ex - 3 * s, ey, 2 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ex + 5 * s, ey, 2 * s, 0, Math.PI * 2); ctx.fill();
+  } else if (eyes === 'angry') {
+    ctx.strokeStyle = '#14140f';
+    ctx.lineWidth = Math.max(1.5, 2 * s);
+    ctx.beginPath();
+    ctx.moveTo(ex - 7 * s, ey - 4 * s); ctx.lineTo(ex - 2 * s, ey - 1 * s);
+    ctx.moveTo(ex + 7 * s, ey - 4 * s); ctx.lineTo(ex + 2 * s, ey - 1 * s);
+    ctx.stroke();
+    ctx.fillRect(ex - 6 * s, ey, 3 * s, 3 * s);
+    ctx.fillRect(ex + 3 * s, ey, 3 * s, 3 * s);
+  } else if (eyes === 'sleepy') {
+    ctx.fillRect(ex - 7 * s, ey, 5 * s, 1.6 * s);
+    ctx.fillRect(ex + 2 * s, ey, 5 * s, 1.6 * s);
+  } else {
+    ctx.fillRect(ex - 5 * s, ey, 2.6 * s, 3.2 * s);
+    ctx.fillRect(ex + 2 * s, ey, 2.6 * s, 3.2 * s);
+  }
+
+  const my = y + h * 0.58;
+  ctx.fillStyle = '#14140f';
+  ctx.strokeStyle = '#14140f';
+  ctx.lineWidth = Math.max(1.2, 1.6 * s);
+  if (mouth === 'grin') {
+    ctx.beginPath(); ctx.arc(cx, my - 2 * s, 5 * s, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+  } else if (mouth === 'fangs') {
+    ctx.beginPath();
+    ctx.moveTo(cx - 5 * s, my); ctx.lineTo(cx - 2.5 * s, my + 4 * s); ctx.lineTo(cx, my);
+    ctx.lineTo(cx + 2.5 * s, my + 4 * s); ctx.lineTo(cx + 5 * s, my);
+    ctx.closePath(); ctx.fill();
+  } else if (mouth === 'ooh') {
+    ctx.beginPath(); ctx.arc(cx, my, 3 * s, 0, Math.PI * 2); ctx.fill();
+  } else {
+    ctx.beginPath(); ctx.arc(cx, my - 1 * s, 4 * s, 0.1 * Math.PI, 0.9 * Math.PI); ctx.stroke();
+  }
+
+  if (hat === 'cap') {
+    ctx.fillStyle = '#e6473c';
+    ctx.fillRect(x + w * 0.1, y - 4 * s, w * 0.8, 4 * s);
+    ctx.fillRect(x + w * 0.1 + facing * w * 0.3, y - 1.5 * s, w * 0.45, 2 * s);
+  } else if (hat === 'antenna') {
+    ctx.strokeStyle = '#3a3a3a';
+    ctx.lineWidth = Math.max(1.2, 1.6 * s);
+    ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, y - 8 * s); ctx.stroke();
+    ctx.fillStyle = '#7dff2e';
+    ctx.beginPath(); ctx.arc(cx, y - 9.5 * s, 2.5 * s, 0, Math.PI * 2); ctx.fill();
+  } else if (hat === 'horns') {
+    ctx.fillStyle = '#f2f2f2';
+    ctx.beginPath(); ctx.moveTo(cx - 8 * s, y); ctx.lineTo(cx - 10 * s, y - 8 * s); ctx.lineTo(cx - 4 * s, y - 1 * s); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx + 8 * s, y); ctx.lineTo(cx + 10 * s, y - 8 * s); ctx.lineTo(cx + 4 * s, y - 1 * s); ctx.fill();
+  } else if (hat === 'crown' || hat === 'golden') {
+    ctx.fillStyle = hat === 'golden' ? '#ffd700' : '#ffcf4d';
+    ctx.beginPath();
+    ctx.moveTo(cx - 8 * s, y);
+    ctx.lineTo(cx - 8 * s, y - 6 * s); ctx.lineTo(cx - 4 * s, y - 2.5 * s);
+    ctx.lineTo(cx, y - 7 * s); ctx.lineTo(cx + 4 * s, y - 2.5 * s);
+    ctx.lineTo(cx + 8 * s, y - 6 * s); ctx.lineTo(cx + 8 * s, y);
+    ctx.closePath(); ctx.fill();
+    if (hat === 'golden') {
+      ctx.strokeStyle = '#fff6c2'; ctx.lineWidth = 1; ctx.stroke();
+    }
+  }
+}
+
+export function drawPlayer(ctx, p, character) {
+  if (character) {
+    drawCharacter(ctx, character, p.x, p.y, p.w, p.h, p.facing);
+    return;
+  }
   ctx.fillStyle = '#ffd54a';
   ctx.fillRect(p.x, p.y, p.w, p.h);
   ctx.fillStyle = '#1b1b1b';

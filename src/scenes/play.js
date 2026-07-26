@@ -12,6 +12,7 @@ import { applyIckio, reachedExit } from '../systems/ickio.js';
 import { stepBoss, bossCollision, damageBoss, bossBox, isWindingUp } from '../systems/boss.js';
 import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff, drawGogio, drawFungy, drawGooDrop, drawIckio, drawBigIckio } from '../render/sprites.js';
 import { drawFps, drawHint } from '../render/ui.js';
+import { sfx } from '../systems/sound.js';
 
 export function update(state, input, dt, now) {
   state.puff = stepPuff(state.puff, dt);
@@ -39,6 +40,7 @@ export function update(state, input, dt, now) {
   p = horizontalStep(p, input, dt, CONFIG);
 
   const jumpNow = takeJump(input, canJump(p, now, CONFIG), now, CONFIG);
+  if (jumpNow) sfx.jump();
   p = verticalStep(p, { jumpNow, holding: input.jump }, dt, CONFIG);
 
   const wasOnGround = p.onGround;
@@ -50,6 +52,8 @@ export function update(state, input, dt, now) {
   // floor would cancel the bounce on the same frame.
   const boing = applyBouncers(p, state.level, now, CONFIG, arrivingSpeed);
   p = boing.player;
+  if (boing.bounced === 'gogio') sfx.gogio();
+  if (boing.bounced === 'fungy') sfx.fungy();
   state.lastBounce = boing.bounced || state.lastBounce;
 
   // --- Big Gogio ---
@@ -58,10 +62,12 @@ export function update(state, input, dt, now) {
     const what = bossCollision(state.boss, p, arrivingSpeed, now, CONFIG);
     if (what === 'hit') {
       state.boss = damageBoss(state.boss, now, CONFIG);
+      sfx.hit();
       p = { ...p, y: state.boss.y - p.h, vy: -CONFIG.BOSS_BOUNCE_BACK, onGround: false, jumping: false };
       state.puff = state.puff.concat(makePuff({ ...p, y: state.boss.y }, 10));
-      if (state.boss.defeated) { state.player = p; state.won = now; return state; }
+      if (state.boss.defeated) { state.player = p; state.won = now; sfx.win(); return state; }
     } else if (what === 'hurt') {
+      sfx.death();
       state.puff = state.puff.concat(makePuff(p));
       state.deaths++;
       state.deadUntil = now + CONFIG.RESPAWN_DELAY_MS;
@@ -73,17 +79,19 @@ export function update(state, input, dt, now) {
   // ⭐ Ickio. Speed in, speed out.
   const warp = applyIckio(p, state.level, CONFIG);
   p = warp.player;
-  if (warp.used) state.warps++;
+  if (warp.used) { state.warps++; sfx.warp(); }
 
   state.player = p;
 
   const woke = updateSnoozers(p, state.level, state.checkpoint, CONFIG);
   state.checkpoint = woke.checkpoint;
 
-  state.gooDrops += collectGoo(p, state.level, CONFIG);
+  const picked = collectGoo(p, state.level, CONFIG);
+  if (picked) { state.gooDrops += picked; sfx.coin(); }
 
   if (reachedExit(p, state.level, CONFIG)) {
     state.won = now;
+    sfx.win();
     return state;
   }
 
@@ -93,6 +101,7 @@ export function update(state, input, dt, now) {
   const spiked = boing.bounced === null && touchingSpikes(p, state.level, CONFIG);
 
   if (spiked || isDeadly(p, state.level, CONFIG)) {
+    sfx.death();
     state.puff = state.puff.concat(makePuff(p));
     state.deaths++;
     state.deadUntil = now + CONFIG.RESPAWN_DELAY_MS;
@@ -129,7 +138,7 @@ export function draw(ctx, state, fps) {
   for (const d of level.gooDrops) drawGooDrop(ctx, d, state.time, CONFIG);
   for (const g of level.grumps) drawGrump(ctx, g, state.time, CONFIG);
   if (state.boss) drawBoss(ctx, state.boss, state.time);
-  if (!state.deadUntil) drawPlayer(ctx, state.player);
+  if (!state.deadUntil) drawPlayer(ctx, state.player, state.character);
   drawPuff(ctx, state.puff);
 
   ctx.restore();

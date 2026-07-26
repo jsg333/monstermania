@@ -1,11 +1,13 @@
 import { createState } from './state.js';
 import { createInput } from './systems/input.js';
 import { createTuner } from './render/tuner.js';
-import { load, recordClear } from './systems/save.js';
+import { load, recordClear, save } from './systems/save.js';
 import world1 from './data/levels/world1.js';
 import playground from './data/levels/playground.js';
 import * as play from './scenes/play.js';
 import * as levelSelect from './scenes/levelSelect.js';
+import * as monsterMaker from './scenes/monsterMaker.js';
+import { totalGoo } from './systems/save.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -26,6 +28,11 @@ const sel = {
 };
 
 // Skip straight into a level with ?level=1-3, handy for testing.
+// First time here? Build your monster before you play.
+const maker = monsterMaker.createMaker(sel.save);
+monsterMaker.attachTyping(maker, window);
+if (!sel.save.character) scene = 'maker';
+
 const jumpTo = params.get('level');
 if (jumpTo || params.has('playground')) {
   const found = levels.find((l) => l.id === jumpTo) || levels[0];
@@ -72,11 +79,26 @@ function tick(now, dt) {
   const view = { w: ctx.canvas.width / dpr, h: ctx.canvas.height / dpr };
 
   try {
-    if (scene === 'select') {
+    if (scene === 'maker') {
+      const done = monsterMaker.update(maker, input, now);
+      monsterMaker.draw(ctx, maker, view);
+      if (done) {
+        sel.save = save({ ...sel.save, character: { ...done } });
+        maker.goo = totalGoo(sel.save);
+        scene = 'select';
+        sel.openedAt = now;
+        input.confirm = false;
+      }
+    } else if (scene === 'select') {
       const chosen = levelSelect.update(sel, input, now);
       levelSelect.draw(ctx, sel, view);
-      if (chosen) {
-        game = createState(chosen);
+      if (sel.openMaker) {
+        sel.openMaker = false;
+        maker.goo = totalGoo(sel.save);
+        maker.character = { ...(sel.save.character || maker.character) };
+        scene = 'maker';
+      } else if (chosen) {
+        game = createState(chosen, sel.save.character);
         clearedHandled = false;
         scene = 'play';
         input.jump = false;
@@ -119,10 +141,11 @@ window.__mm = {
   get game() { return game; },
   get sel() { return sel; },
   get fps() { return fps; },
+  get maker() { return maker; },
   goTo(id) {
     const found = levels.find((l) => l.id === id);
     if (!found) return false;
-    game = createState(found);
+    game = createState(found, sel.save.character);
     clearedHandled = false;
     scene = 'play';
     return true;

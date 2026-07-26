@@ -9,10 +9,10 @@ import { instantiate } from './data/levels/format.js';
 
 // Play the same level again from scratch.
 export function restart(state) {
-  return createState(state.sourceLevel);
+  return createState(state.sourceLevel, state.character);
 }
 
-export function createState(sourceLevel = playground) {
+export function createState(sourceLevel = playground, character = null) {
   // Always play a fresh copy — see instantiate() for why.
   const level = instantiate(sourceLevel);
   return {
@@ -30,7 +30,6 @@ export function createState(sourceLevel = playground) {
     warps: 0,
     won: 0,
     boss: sourceLevel.boss ? createBoss(level) : null,
-    // Phase 6 fills this in from the Monster Maker
-    character: { name: '', body: 0, color: 0, eyes: 0, mouth: 0, hat: 0 }
+    character
   };
 }
