@@ -14,15 +14,14 @@ Shared source of truth for any AI assistant working in this folder (Claude, Code
 
 ## Deploying
 
-Cloudflare Pages project `monstermania`, direct upload via wrangler:
+**Automatic.** Cloudflare Pages project `monstermania` is connected to this repo — every push to `main` builds and deploys. No manual step. `npm run deploy:cloudflare` still exists as an escape hatch.
 
-```bash
-npm run build && npm run deploy:cloudflare
-```
+Build settings (already configured): framework preset **None**, build command `npm run build`, output directory `dist`, production branch `main`, env var `NODE_VERSION=20`.
 
-**Note:** Cloudflare cannot add Git integration to an existing Pages project. A direct-upload project has no "Connect to Git" option — the only way to get auto-deploy is to delete the project and recreate it via **Create application → Pages → Import an existing Git repository**.
+Two gotchas worth remembering:
 
-Git-connected build settings: framework preset **None**, build command `npm run build`, output directory `dist`, production branch `main`, and env var `NODE_VERSION=20`. If a build ever fails with `vite: command not found`, the builder is omitting devDependencies — set `NODE_ENV=development`.
+- Cloudflare **cannot** add Git integration to an existing Pages project. If this project ever gets recreated, it must be made via **Create application → Pages → Import an existing Git repository** from the start. The dashboard's "Create application" button now funnels into the *Workers* wizard — go straight to `/workers-and-pages/create/pages` to get the Pages flow.
+- If a build fails with `vite: command not found`, the builder is omitting devDependencies — set `NODE_ENV=development`.
 
 ## Open design questions (Ethan answers these, not the assistant)
 

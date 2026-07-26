@@ -16,8 +16,9 @@ npm install     # first time only
 npm run dev     # play it in your browser
 npm test        # run the tests
 npm run build   # build to dist/
-npm run deploy:cloudflare   # publish to monstermania.pages.dev
 ```
+
+**Deploying is automatic.** Push to `main` and Cloudflare rebuilds the site in about a minute. You don't have to run anything.
 
 > **If `npm install` finishes suspiciously fast and then `vite: command not found`:**
 > your shell has `NODE_ENV=production` set, so npm skips devDependencies — and vite
