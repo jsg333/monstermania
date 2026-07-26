@@ -8,7 +8,7 @@ Shared source of truth for any AI assistant working in this folder (Claude, Code
 
 - **Game content source of truth:** `MONSTERMANIA-GAME-DESIGN.md` (wins any conflict)
 - **Execution order:** `BUILD-PLAN.md` (phases; do them in order, one phase per PR series)
-- **Status:** Phases 0-5 done ✅ — World 1 is playable end to end (6 levels, boss, level select, saved progress). 156 tests green. Next is Phase 6: Monster Maker + Goo Drop perks.
+- **Status:** Phases 0-6 done ✅ — World 1 playable end to end, Monster Maker, Goo Drop unlocks and sound. 180 tests green. Next is Phase 7: Worlds 2-4 (Stickio and Slowmo).
 - **Jump feel is Ethan-tuned and settled.** Do not change GRAVITY / JUMP_SPEED / RUN_SPEED / JUMP_CUTOFF without him. A player clears a 6.9-block gap at a full run — that's the ceiling on pit widths.
 - **Tuning panel:** add `?tune` to the URL for live sliders. `src/render/tuner.js`.
 - **Browser playtesting:** `window.__mm` exposes live state — `step(n)`, `setInput()`, `goTo(id)`, `game`, `lastError`. Use it instead of scraping canvas pixels. Browsers throttle rAF to zero in a hidden tab, so a healthy game looks frozen; `step()` sidesteps that entirely.

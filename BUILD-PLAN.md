@@ -139,14 +139,18 @@ __mm.lastError;                      // whatever crashed the loop
 
 **Why this matters:** a scripted playtest died 11 times on level 1-1 — the level whose entire job is being unfailable. Every unit test was green. Level 1-1 now has a safety floor.
 
-## Phase 6 — Monster Maker + Goo Drops
+## Phase 6 — Monster Maker + Goo Drops ✅ DONE
 
 1. Character creator: type a name, pick body / color / eyes / mouth / hat. Recommended starting set: 4 / 8 / 4 / 4 / 6.
 2. Goo Drops: 3 hidden per level, "2 / 3" counter, saved per level.
 3. Unlocks: new parts every few drops; **secret bonus levels at 15 / 30 / 45 / 60**.
 4. `save.js` — persist everything to `localStorage`.
 
-**Done when:** you can make a character, collect drops, unlock a hat, reload the page, and it's all still there.
+**Done.** Type a name, pick body / colour / eyes / mouth / hat — **3,072 combinations from 26 drawings**. The character you build is your sprite in-game and appears on the level select. Locked parts are skipped when scrolling rather than shown and refused. The golden crown needs 20 Goo Drops.
+
+**Sound came forward from Phase 8**, because it's the biggest "feels like a real game" upgrade per minute of work: jump, Fungy hop, Gogio boom, coin, Ickio warp, death, boss hit and a win fanfare. Pure WebAudio synth — no files to load, and it goes silent rather than breaking if the browser refuses audio.
+
+One bug found by playtesting in the browser: **Enter is also a jump key**, and typing a name presses a dozen more. Confirming your character left the jump held, which shot you straight past the level select into 1-1.
 
 ## Phase 7 — Worlds 2–4
 
