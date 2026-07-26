@@ -98,10 +98,15 @@ function tick(now, dt) {
     }
   } catch (err) {
     crashed(err);
-    return;
+    return false;
   }
+  return true;
+}
 
-  requestAnimationFrame(frame);
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, 1 / 30);
+  last = now;
+  if (tick(now, dt)) requestAnimationFrame(frame);
 }
 try { requestAnimationFrame(frame); } catch (err) { crashed(err); }
 
