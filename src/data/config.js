@@ -43,6 +43,11 @@ export const CONFIG = {
 
   // ---- Dying ----
   RESPAWN_DELAY_MS: 400,    // must stay under 1000. Dying has to be FAST.
+  HAZARD_FORGIVENESS: 7,    // pixels shaved off every spike. Bigger = kinder.
+
+  // ---- Camera ----
+  CAMERA_DEADZONE: 70,      // how far you can drift from the middle before it follows
+  CAMERA_EASE: 0.12,        // how smoothly it glides. 1 = snaps instantly.
 
   // ---- Boss: Big Gogio ----
   BOSS_HEALTH: 3,

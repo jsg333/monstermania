@@ -1,13 +1,27 @@
-// Phase 1: run and jump in a test room. No monsters, no hazards, no goal yet.
-// The ONLY question this scene has to answer is "does the jump feel good?"
+// Phase 2: platforms, a camera, Grumps, dying and checkpoints.
 
 import CONFIG from '../data/config.js';
 import { horizontalStep, verticalStep, canJump } from '../systems/physics.js';
 import { takeJump } from '../systems/input.js';
-import { moveAndCollide, isSolid } from '../systems/collision.js';
+import { moveAndCollide } from '../systems/collision.js';
+import { followCamera, easeCamera } from '../systems/camera.js';
+import { isDeadly, updateSnoozers, respawn, makePuff, stepPuff } from '../systems/hazards.js';
+import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff } from '../render/sprites.js';
 import { drawFps, drawHint } from '../render/ui.js';
 
 export function update(state, input, dt, now) {
+  state.puff = stepPuff(state.puff, dt);
+  state.time = now;
+
+  // Dead: hold still for a beat, then pop back at the checkpoint.
+  if (state.deadUntil) {
+    if (now >= state.deadUntil) {
+      state.player = respawn(state.player, state.checkpoint);
+      state.deadUntil = 0;
+    }
+    return state;
+  }
+
   let p = state.player;
   p = horizontalStep(p, input, dt, CONFIG);
 
@@ -17,61 +31,48 @@ export function update(state, input, dt, now) {
   const wasOnGround = p.onGround;
   p = moveAndCollide(p, state.level, dt, CONFIG);
   if (wasOnGround && !p.onGround) p = { ...p, leftGroundAt: now };
+  state.player = p;
 
-  // Fell out of the world? Straight back to the checkpoint. (Phase 2 makes this proper.)
-  if (p.y > state.level.tiles.length * CONFIG.TILE + 200) {
-    p = { ...p, x: state.checkpoint.x, y: state.checkpoint.y, vx: 0, vy: 0 };
+  const woke = updateSnoozers(p, state.level, state.checkpoint, CONFIG);
+  state.checkpoint = woke.checkpoint;
+
+  if (isDeadly(p, state.level, CONFIG)) {
+    state.puff = state.puff.concat(makePuff(p));
     state.deaths++;
+    state.deadUntil = now + CONFIG.RESPAWN_DELAY_MS;
+    // Park the player off-screen so nothing draws mid-death.
+    state.player = { ...p, x: -9999, y: -9999, vx: 0, vy: 0 };
   }
 
-  state.player = p;
   return state;
 }
 
 export function draw(ctx, state, fps) {
-  const T = CONFIG.TILE;
-  const { level, player } = state;
-  const viewW = ctx.canvas.width / (window.devicePixelRatio || 1);
-  const viewH = ctx.canvas.height / (window.devicePixelRatio || 1);
-  const levelW = level.tiles[0].length * T;
-  const levelH = level.tiles.length * T;
+  const dpr = window.devicePixelRatio || 1;
+  const view = { w: ctx.canvas.width / dpr, h: ctx.canvas.height / dpr };
+  const { level } = state;
 
-  ctx.fillStyle = '#10241a';
-  ctx.fillRect(0, 0, viewW, viewH);
-
-  // Phase 1 only: the whole room fits on screen, so just centre it.
-  // Phase 2 replaces this with a camera that follows the player.
-  const offX = Math.round((viewW - levelW) / 2);
-  const offY = Math.round((viewH - levelH) / 2);
-  ctx.save();
-  ctx.translate(offX, offY);
-
-  // Platforms — flat on top, just like Ethan said.
-  for (let r = 0; r < level.tiles.length; r++) {
-    for (let c = 0; c < level.tiles[r].length; c++) {
-      if (level.tiles[r][c] !== 1) continue;
-      ctx.fillStyle = '#2f6b45';
-      ctx.fillRect(c * T, r * T, T, T);
-      // Only highlight a surface you could actually stand on. Without this
-      // check, a stack of wall tiles gets a stripe every 32px and reads as
-      // a ladder instead of a wall.
-      if (!isSolid(level, c, r - 1)) {
-        ctx.fillStyle = '#4ea86a';
-        ctx.fillRect(c * T, r * T, T, 5);
-      }
-    }
+  // Camera follows whoever is alive; when you're dead it stays put.
+  if (!state.deadUntil) {
+    const target = followCamera(state.cam, state.player, view, level, CONFIG);
+    state.cam = easeCamera(state.cam, target, 1 / 60, CONFIG);
   }
 
-  // Placeholder player. Phase 6 replaces this with the character you build.
-  ctx.fillStyle = '#ffd54a';
-  ctx.fillRect(player.x, player.y, player.w, player.h);
-  ctx.fillStyle = '#1b1b1b';
-  const eyeX = player.x + (player.facing > 0 ? 14 : 4);
-  ctx.fillRect(eyeX, player.y + 8, 5, 6);
+  ctx.fillStyle = '#10241a';
+  ctx.fillRect(0, 0, view.w, view.h);
+
+  ctx.save();
+  ctx.translate(-Math.round(state.cam.x), -Math.round(state.cam.y));
+
+  drawLevel(ctx, level, state.cam, view, CONFIG);
+  for (const s of level.snoozers) drawSnoozer(ctx, s, state.time, CONFIG);
+  for (const g of level.grumps) drawGrump(ctx, g, state.time, CONFIG);
+  if (!state.deadUntil) drawPlayer(ctx, state.player);
+  drawPuff(ctx, state.puff);
 
   ctx.restore();
 
   drawFps(ctx, fps);
-  drawHint(ctx, 'Arrows or A/D to move  \u00b7  ANY other button to jump  \u00b7  hold longer = jump higher', viewH - 40);
-  drawHint(ctx, `Restarts: ${state.deaths}`, viewH - 20);
+  drawHint(ctx, 'Arrows or A/D to move  ·  ANY other button to jump  ·  wake the Snoozers to save your spot', view.h - 40);
+  drawHint(ctx, `Restarts: ${state.deaths}`, view.h - 20);
 }

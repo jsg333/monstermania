@@ -2,14 +2,19 @@
 // which makes saving to localStorage and testing both easy.
 
 import { createPlayer } from './systems/physics.js';
-import testRoom from './data/levels/testRoom.js';
+import { createCamera } from './systems/camera.js';
+import playground from './data/levels/playground.js';
 
-export function createState() {
+export function createState(level = playground) {
   return {
     scene: 'play',
-    level: testRoom,
-    player: createPlayer(testRoom.spawn.x, testRoom.spawn.y),
-    checkpoint: { ...testRoom.spawn },
+    level,
+    player: createPlayer(level.spawn.x, level.spawn.y),
+    cam: createCamera(),
+    checkpoint: { ...level.spawn },
+    deadUntil: 0,
+    puff: [],
+    time: 0,
     deaths: 0,
     gooDrops: 0,
     // Phase 6 fills this in from the Monster Maker

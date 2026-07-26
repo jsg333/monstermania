@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import CONFIG from '../src/data/config.js';
 import { createPlayer } from '../src/systems/physics.js';
 import { moveAndCollide, isSolid } from '../src/systems/collision.js';
-import testRoom from '../src/data/levels/testRoom.js';
+import playground from '../src/data/levels/playground.js';
 
 // A small room: solid floor along the bottom, walls on the sides.
 const room = {
@@ -49,16 +49,21 @@ describe('collision', () => {
   });
 });
 
-describe('test room', () => {
-  it('is a rectangle with a solid floor and no ragged rows', () => {
-    const width = testRoom.tiles[0].length;
-    expect(testRoom.tiles.every((r) => r.length === width)).toBe(true);
-    expect(testRoom.tiles.at(-1).every((t) => t === 1)).toBe(true);
+describe('the playground level', () => {
+  it('is a rectangle with no ragged rows', () => {
+    const width = playground.tiles[0].length;
+    expect(playground.tiles.every((r) => r.length === width)).toBe(true);
+  });
+
+  it('has real holes in the floor to fall through', () => {
+    const floor = playground.tiles[13];
+    expect(floor.some((t) => t === 1)).toBe(true);
+    expect(floor.some((t) => t === 0)).toBe(true);
   });
 
   it('spawns the player inside the room, not in a wall', () => {
-    const col = Math.floor(testRoom.spawn.x / T);
-    const row = Math.floor(testRoom.spawn.y / T);
-    expect(isSolid(testRoom, col, row)).toBe(false);
+    const col = Math.floor(playground.spawn.x / T);
+    const row = Math.floor(playground.spawn.y / T);
+    expect(isSolid(playground, col, row)).toBe(false);
   });
 });
