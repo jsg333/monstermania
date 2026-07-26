@@ -57,7 +57,7 @@ tests/               # vitest unit tests for systems + data
 
 **Done when:** `npm run dev` shows a canvas; `npm test` and `npm run build` pass.
 
-## Phase 1 — The jump 🎯 THE IMPORTANT ONE
+## Phase 1 — The jump ✅ DONE
 
 1. Player entity: run left/right with acceleration and friction, gravity, ground collision.
 2. **Variable-height jump** — tap for a hop, hold for a full jump.
@@ -65,16 +65,24 @@ tests/               # vitest unit tests for systems + data
 4. A single flat test room with a few platforms. No monsters, no hazards, no goal.
 5. Unit tests for the physics step and the jump-height curve.
 
-**Done when:** **Ethan plays it and says the jump feels good.** That's the acceptance test. Tune `config.js` with him sitting there — change one number at a time and let him feel the difference.
+**Done.** Ethan tuned it himself with the tuning panel (`?tune`) on 2026-07-25. He tried a fast snappy jump first, then chose floaty: **4.29 blocks high, 0.89s in the air, a 0.69-block tap hop, and a 6.9-block gap at a full run.**
 
-## Phase 2 — Platforms, death and checkpoints
+That last number is a design constraint now — no pit in any level may be wider than about 6 blocks unless a monster is there to help you across.
+
+He also caught a real bug by feel: jumps were being dropped because a key press lands between animation frames. Tests alone never noticed.
+
+## Phase 2 — Platforms, death and checkpoints ✅ DONE
 
 1. Tile-based level format (a 2D array in `src/data/levels/`) with solid platforms.
 2. Camera that follows the player.
 3. Stuck Grumps (static spikes) + pit deaths → puff of smoke → instant respawn at last checkpoint.
 4. Snoozers (checkpoint monsters) — touch to activate, visibly wake up.
 
-**Done when:** you can die 20 times in a row and it never feels slow or annoying. Time the respawn: under one second, no clicking.
+**Done.** Levels are drawn as text (`1` solid, `^` Grump, `S` Snoozer, `P` start) so Ethan can build one in any text editor. Camera follows with a dead zone and never shows outside the level. Respawn is 400ms with no screen to click through.
+
+Spike hitboxes are shaved 7px on every side (`HAZARD_FORGIVENESS`). Nothing makes a player quit faster than dying to a spike they were sure they cleared.
+
+**Still needs Ethan's verdict:** die twenty times on purpose and check it never feels annoying.
 
 ## Phase 3 — Fungy and Gogio
 

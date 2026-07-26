@@ -8,7 +8,9 @@ Shared source of truth for any AI assistant working in this folder (Claude, Code
 
 - **Game content source of truth:** `MONSTERMANIA-GAME-DESIGN.md` (wins any conflict)
 - **Execution order:** `BUILD-PLAN.md` (phases; do them in order, one phase per PR series)
-- **Status:** Phase 0 scaffold done ✅ — Vite + Vitest, running/jumping test room, 23 tests green. Phase 1 is tuning the jump until Ethan says it feels right.
+- **Status:** Phases 0, 1 and 2 done ✅ — 54 tests green. Next is Phase 3: Fungy and Gogio.
+- **Jump feel is Ethan-tuned and settled.** Do not change GRAVITY / JUMP_SPEED / RUN_SPEED / JUMP_CUTOFF without him. A player clears a 6.9-block gap at a full run — that's the ceiling on pit widths.
+- **Tuning panel:** add `?tune` to the URL for live sliders. `src/render/tuner.js`.
 - **Phasing:** make World 1 fun first. The level maker is **Phase 9** — do not build it early.
 - **Repo:** https://github.com/jsg333/monstermania (`main`) · **Live:** https://monstermania.pages.dev
 
