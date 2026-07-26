@@ -3,7 +3,8 @@
 //
 //   1  a solid block          ^  a Grump (spikes)
 //   .  empty air              S  a Snoozer (checkpoint)
-//   P  where you start
+//   P  where you start        f  a Fungy (small forward hop)
+//                             g  a Gogio (big bounce, gets tired)
 //
 // Everything that isn't a solid block becomes empty air, so you can leave
 // blank space or use dots, whichever is easier to see.
@@ -18,6 +19,8 @@ export function parseLevel(name, map, cfg = CONFIG) {
   const tiles = [];
   const grumps = [];
   const snoozers = [];
+  const fungies = [];
+  const gogios = [];
   let spawn = null;
 
   rows.forEach((row, r) => {
@@ -27,6 +30,8 @@ export function parseLevel(name, map, cfg = CONFIG) {
     [...padded].forEach((ch, c) => {
       if (ch === '^') grumps.push({ x: c * T, y: r * T });
       if (ch === 'S') snoozers.push({ x: c * T, y: r * T, awake: false });
+      if (ch === 'f') fungies.push({ x: c * T, y: r * T, lastBounceAt: -Infinity, squash: 0 });
+      if (ch === 'g') gogios.push({ x: c * T, y: r * T, bounces: 0, lastBounceAt: -Infinity, squash: 0 });
       if (ch === 'P') spawn = { x: c * T + 4, y: r * T };
     });
   });
@@ -34,7 +39,7 @@ export function parseLevel(name, map, cfg = CONFIG) {
   if (!spawn) throw new Error(`Level "${name}" has no P (start point)`);
 
   return {
-    name, tiles, grumps, snoozers, spawn,
+    name, tiles, grumps, snoozers, fungies, gogios, spawn,
     cols: width,
     rows: rows.length,
     widthPx: width * T,

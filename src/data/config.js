@@ -33,13 +33,14 @@ export const CONFIG = {
   COYOTE_TIME_MS: 0,        // jump slightly after leaving a ledge. 0 = off. (typical game: 100)
   JUMP_BUFFER_MS: 0,        // remember a jump pressed just before landing. 0 = off. (typical: 120)
 
-  // ---- Monsters (Phase 3 and 4) ----
+  // ---- Monsters ----
   FUNGY_HOP_SPEED: 520,     // Fungy's little forward hop
   FUNGY_FORWARD_BOOST: 240, // and the shove in the way you're running
   GOGIO_BOUNCE_SPEED: 1150, // Gogio's BIG bounce
   GOGIO_TIRED_STEP: 0.72,   // each bounce in a row is this much of the last one
   GOGIO_MAX_BOUNCES: 3,     // after this many he needs a breath
   GOGIO_RECOVER_MS: 1200,   // how long his breath takes
+  SQUASH_MS: 220,           // how long the squash-and-stretch wobble lasts
 
   // ---- Dying ----
   RESPAWN_DELAY_MS: 400,    // must stay under 1000. Dying has to be FAST.

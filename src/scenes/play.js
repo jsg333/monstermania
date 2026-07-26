@@ -6,7 +6,8 @@ import { takeJump } from '../systems/input.js';
 import { moveAndCollide } from '../systems/collision.js';
 import { followCamera, easeCamera } from '../systems/camera.js';
 import { isDeadly, updateSnoozers, respawn, makePuff, stepPuff } from '../systems/hazards.js';
-import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff } from '../render/sprites.js';
+import { applyBouncers } from '../systems/bouncers.js';
+import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff, drawGogio, drawFungy } from '../render/sprites.js';
 import { drawFps, drawHint } from '../render/ui.js';
 
 export function update(state, input, dt, now) {
@@ -31,6 +32,13 @@ export function update(state, input, dt, now) {
   const wasOnGround = p.onGround;
   p = moveAndCollide(p, state.level, dt, CONFIG);
   if (wasOnGround && !p.onGround) p = { ...p, leftGroundAt: now };
+
+  // Land on a monster and he throws you. Must come after collision, or the
+  // floor would cancel the bounce on the same frame.
+  const boing = applyBouncers(p, state.level, now, CONFIG);
+  p = boing.player;
+  state.lastBounce = boing.bounced || state.lastBounce;
+
   state.player = p;
 
   const woke = updateSnoozers(p, state.level, state.checkpoint, CONFIG);
@@ -66,6 +74,8 @@ export function draw(ctx, state, fps) {
 
   drawLevel(ctx, level, state.cam, view, CONFIG);
   for (const s of level.snoozers) drawSnoozer(ctx, s, state.time, CONFIG);
+  for (const f of level.fungies) drawFungy(ctx, f, state.time, CONFIG);
+  for (const g of level.gogios) drawGogio(ctx, g, state.time, CONFIG);
   for (const g of level.grumps) drawGrump(ctx, g, state.time, CONFIG);
   if (!state.deadUntil) drawPlayer(ctx, state.player);
   drawPuff(ctx, state.puff);
@@ -73,6 +83,6 @@ export function draw(ctx, state, fps) {
   ctx.restore();
 
   drawFps(ctx, fps);
-  drawHint(ctx, 'Arrows or A/D to move  ·  ANY other button to jump  ·  wake the Snoozers to save your spot', view.h - 40);
+  drawHint(ctx, 'Arrows or A/D to move  ·  ANY other button to jump  ·  land on Fungy and Gogio to be thrown', view.h - 40);
   drawHint(ctx, `Restarts: ${state.deaths}`, view.h - 20);
 }

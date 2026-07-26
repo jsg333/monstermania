@@ -54,3 +54,28 @@ describe('the playground level', () => {
     expect(playground.widthPx).toBeGreaterThan(1200);
   });
 });
+
+describe('the playground teaches the monsters', () => {
+  it('has a Fungy and a Gogio in it', async () => {
+    const { default: pg } = await import('../src/data/levels/playground.js');
+    expect(pg.fungies.length).toBeGreaterThan(0);
+    expect(pg.gogios.length).toBeGreaterThan(0);
+  });
+
+  it('has a pit too wide to jump, so Fungy is the only way across', async () => {
+    const { default: pg } = await import('../src/data/levels/playground.js');
+    const floor = pg.tiles[19];
+    let widest = 0, run = 0;
+    for (const t of floor) { run = t === 0 ? run + 1 : 0; widest = Math.max(widest, run); }
+    const jumpableBlocks = (CONFIG.RUN_SPEED * (2 * CONFIG.JUMP_SPEED / CONFIG.GRAVITY)) / T;
+    expect(widest).toBeGreaterThan(jumpableBlocks);
+  });
+
+  it('has a shelf too high to jump, so Gogio is the only way up', async () => {
+    const { default: pg } = await import('../src/data/levels/playground.js');
+    const jumpBlocks = ((CONFIG.JUMP_SPEED ** 2) / (2 * CONFIG.GRAVITY)) / T;
+    const shelfRow = 6;
+    expect(19 - shelfRow).toBeGreaterThan(jumpBlocks);
+    expect(pg.tiles[shelfRow].some((t) => t === 1)).toBe(true);
+  });
+});

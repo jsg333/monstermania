@@ -3,6 +3,7 @@
 
 import CONFIG from '../data/config.js';
 import { isSolid } from '../systems/collision.js';
+import { squashAmount, tiredAmount } from '../systems/bouncers.js';
 
 export function drawLevel(ctx, level, cam, view, cfg = CONFIG) {
   const T = cfg.TILE;
@@ -84,4 +85,61 @@ export function drawPuff(ctx, particles) {
     ctx.fillRect(q.x - 3, q.y - 3, 6, 6);
   }
   ctx.globalAlpha = 1;
+}
+
+// Gogio — a big round bouncer. He squashes when you land on him and stays
+// flatter each time until he gets a breather.
+export function drawGogio(ctx, g, time, cfg = CONFIG) {
+  const T = cfg.TILE;
+  const squash = squashAmount(g, time, cfg);
+  const tired = tiredAmount(g, time, cfg);
+
+  const baseH = T * (1 - 0.28 * tired);
+  const h = baseH * (1 - 0.45 * squash);
+  const w = T * (1 + 0.35 * squash);
+  const cx = g.x + T / 2;
+  const bottom = g.y + T;
+
+  ctx.fillStyle = tired > 0.6 ? '#2f8fd6' : '#39b0ff';
+  ctx.beginPath();
+  ctx.ellipse(cx, bottom - h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#06263d';
+  const eyeY = bottom - h * 0.62;
+  ctx.fillRect(cx - 7, eyeY, 4, tired > 0.6 ? 2 : 5);
+  ctx.fillRect(cx + 3, eyeY, 4, tired > 0.6 ? 2 : 5);
+
+  // Little puff lines while he catches his breath.
+  if (tired >= 0.99) {
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.font = '9px system-ui';
+    ctx.fillText('huff', cx + 10, bottom - h - 3);
+  }
+}
+
+// Fungy — a mushroom. Same hop every time, never tires.
+export function drawFungy(ctx, f, time, cfg = CONFIG) {
+  const T = cfg.TILE;
+  const squash = squashAmount(f, time, cfg);
+  const capH = T * 0.5 * (1 - 0.4 * squash);
+  const capW = T * (0.92 + 0.3 * squash);
+  const cx = f.x + T / 2;
+  const bottom = f.y + T;
+
+  ctx.fillStyle = '#e8dcc0';                       // stalk
+  ctx.fillRect(cx - 5, bottom - T * 0.5, 10, T * 0.5);
+
+  ctx.fillStyle = '#ff6b6b';                       // cap
+  ctx.beginPath();
+  ctx.ellipse(cx, bottom - T * 0.5, capW / 2, capH, 0, Math.PI, 0);
+  ctx.fill();
+
+  ctx.fillStyle = '#fff0f0';                       // spots
+  ctx.beginPath(); ctx.arc(cx - 7, bottom - T * 0.62, 2.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + 6, bottom - T * 0.68, 2, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = '#1b1b1b';                       // face on the stalk
+  ctx.fillRect(cx - 4, bottom - T * 0.34, 2, 3);
+  ctx.fillRect(cx + 2, bottom - T * 0.34, 2, 3);
 }
