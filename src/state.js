@@ -4,6 +4,7 @@
 import { createPlayer } from './systems/physics.js';
 import { createCamera } from './systems/camera.js';
 import playground from './data/levels/playground.js';
+import { createBoss } from './systems/boss.js';
 import { instantiate } from './data/levels/format.js';
 
 // Play the same level again from scratch.
@@ -28,6 +29,7 @@ export function createState(sourceLevel = playground) {
     gooDrops: 0,
     warps: 0,
     won: 0,
+    boss: sourceLevel.boss ? createBoss(level) : null,
     // Phase 6 fills this in from the Monster Maker
     character: { name: '', body: 0, color: 0, eyes: 0, mouth: 0, hat: 0 }
   };

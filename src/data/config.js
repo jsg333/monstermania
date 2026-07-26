@@ -57,6 +57,7 @@ export const CONFIG = {
   CAMERA_EASE: 0.12,        // how smoothly it glides. 1 = snaps instantly.
 
   // ---- Boss: Big Gogio ----
+  BOSS_BOUNCE_BACK: 780,    // how hard you bounce off his head after a hit
   BOSS_HEALTH: 3,
   BOSS_WINDUP_MS: 500,      // he squishes before he jumps, so you get a fair warning
   BOSS_SPEEDUP_PER_HIT: 1.25,

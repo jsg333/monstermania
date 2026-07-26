@@ -1,13 +1,37 @@
 import { createState } from './state.js';
 import { createInput } from './systems/input.js';
-import * as play from './scenes/play.js';
 import { createTuner } from './render/tuner.js';
+import { load, recordClear } from './systems/save.js';
+import world1 from './data/levels/world1.js';
+import playground from './data/levels/playground.js';
+import * as play from './scenes/play.js';
+import * as levelSelect from './scenes/levelSelect.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const state = createState();
 const input = createInput(window);
 createTuner();
+
+const params = new URLSearchParams(location.search);
+const levels = params.has('playground') ? [playground] : world1;
+
+let scene = 'select';
+let game = null;
+const sel = {
+  levels,
+  index: 0,
+  lastMove: 0,
+  openedAt: performance.now(),
+  save: load()
+};
+
+// Skip straight into a level with ?level=1-3, handy for testing.
+const jumpTo = params.get('level');
+if (jumpTo || params.has('playground')) {
+  const found = levels.find((l) => l.id === jumpTo) || levels[0];
+  game = createState(found);
+  scene = 'play';
+}
 
 function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -20,10 +44,9 @@ resize();
 
 let last = performance.now();
 let fps = 60;
+let clearedHandled = false;
 
-// If something throws inside the game loop, the loop stops and the screen
-// freezes with no explanation — which just looks like "the game is broken".
-// Show the problem instead of dying quietly.
+// A silent freeze just looks like "the game is broken". Show the problem.
 function crashed(err) {
   console.error('Monstermania crashed:', err);
   const w = ctx.canvas.width / (window.devicePixelRatio || 1);
@@ -38,19 +61,64 @@ function crashed(err) {
 }
 
 function frame(now) {
-  // Clamp dt so alt-tabbing doesn't teleport the player through a wall.
   const dt = Math.min((now - last) / 1000, 1 / 30);
   last = now;
   fps += ((1 / Math.max(dt, 0.0001)) - fps) * 0.1;
 
+  const dpr = window.devicePixelRatio || 1;
+  const view = { w: ctx.canvas.width / dpr, h: ctx.canvas.height / dpr };
+
   try {
-    play.update(state, input, dt, now);
-    play.draw(ctx, state, fps);
+    if (scene === 'select') {
+      const chosen = levelSelect.update(sel, input, now);
+      levelSelect.draw(ctx, sel, view);
+      if (chosen) {
+        game = createState(chosen);
+        clearedHandled = false;
+        scene = 'play';
+        input.jump = false;
+        input.jumpConsumed = true;
+      }
+    } else {
+      play.update(game, input, dt, now);
+      play.draw(ctx, game, fps);
+
+      if (game.won && !clearedHandled) {
+        clearedHandled = true;
+        sel.save = recordClear(sel.save, game.level.id || 'playground', game.gooDrops);
+      }
+      if (game.backToSelect) {
+        scene = 'select';
+        sel.openedAt = now;
+        game.backToSelect = false;
+      }
+    }
   } catch (err) {
     crashed(err);
-    return;                       // stop the loop, but leave the message up
+    return;
   }
 
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// Testing hook. Lets a browser test read exact game state instead of trying
+// to guess it from pixel colours — which is unreliable and, when the reads
+// are expensive, actively slows the game down and produces false results.
+window.__mm = {
+  get scene() { return scene; },
+  get game() { return game; },
+  get sel() { return sel; },
+  get fps() { return fps; },
+  goTo(id) {
+    const found = levels.find((l) => l.id === id);
+    if (!found) return false;
+    game = createState(found);
+    clearedHandled = false;
+    scene = 'play';
+    return true;
+  },
+  place(x, y) { if (game) game.player = { ...game.player, x, y, vx: 0, vy: 0 }; },
+  press(code) { window.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true })); },
+  release(code) { window.dispatchEvent(new KeyboardEvent('keyup', { code, bubbles: true })); }
+};

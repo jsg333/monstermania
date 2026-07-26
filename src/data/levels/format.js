@@ -13,7 +13,8 @@
 
 import CONFIG from '../config.js';
 
-export function parseLevel(name, map, cfg = CONFIG) {
+export function parseLevel(name, map, cfg = CONFIG, meta = {}) {
+  cfg = cfg || CONFIG;
   const rows = map.replace(/^\n/, '').replace(/\s+$/, '').split('\n');
   const width = Math.max(...rows.map((r) => r.length));
   const T = cfg.TILE;
@@ -56,6 +57,7 @@ export function parseLevel(name, map, cfg = CONFIG) {
   }
 
   return {
+    ...meta,
     name, tiles, grumps, snoozers, fungies, gogios, gooDrops, ickios, exit, spawn,
     cols: width,
     rows: rows.length,
