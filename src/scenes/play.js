@@ -28,10 +28,9 @@ export function update(state, input, dt, now) {
 
   // Won? Freeze the world until they press a button to play again.
   if (state.won) {
-    if (input.jump && now - state.won > 800) {
-      const fresh = restart(state);
-      Object.assign(state, fresh, { backToSelect: true });
-    }
+    // Finish a level and you go to the NEXT one. Bouncing back to the menu
+    // and making the player re-pick is friction nobody asked for.
+    if (input.jump && now - state.won > 700) state.advance = true;
     return state;
   }
 
@@ -259,8 +258,14 @@ function drawWinScreen(ctx, state, view) {
   ctx.fillText(`Trips through Ickio: ${state.warps}`, view.w / 2, view.h / 2 + 56);
 
   ctx.fillStyle = '#9cff6b';
-  ctx.font = 'bold 16px system-ui, sans-serif';
-  ctx.fillText('Press any button to keep going', view.w / 2, view.h / 2 + 100);
+  ctx.font = 'bold 17px system-ui, sans-serif';
+  ctx.fillText(
+    state.nextTitle ? `Press any button for ${state.nextTitle}  →` : 'Press any button',
+    view.w / 2, view.h / 2 + 100
+  );
+  ctx.fillStyle = '#5e7a68';
+  ctx.font = '13px system-ui, sans-serif';
+  ctx.fillText('ESC for the level menu', view.w / 2, view.h / 2 + 126);
   ctx.textAlign = 'left';
   ctx.restore();
 }

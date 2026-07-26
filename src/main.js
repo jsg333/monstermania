@@ -119,11 +119,38 @@ function tick(now, dt) {
       if (game.won && !clearedHandled) {
         clearedHandled = true;
         sel.save = recordClear(sel.save, game.level.id || 'playground', game.gooDrops);
+
+        // Show the player where they're going next, right on the win screen.
+        const at = levels.findIndex((l) => l.id === game.level.id);
+        const next = at >= 0 ? levels[at + 1] : null;
+        game.nextTitle = next ? `${next.id}  ${next.title}` : null;
       }
+
+      if (game.advance) {
+        const at = levels.findIndex((l) => l.id === game.level.id);
+        const next = at >= 0 ? levels[at + 1] : null;
+        if (next) {
+          sel.index = at + 1;                 // keep the menu in step
+          game = createState(next, sel.save.character);
+          clearedHandled = false;
+        } else {
+          scene = 'select';                   // finished the world
+          sel.openedAt = now;
+        }
+        // Clear the held button, or it immediately fires again on the next
+        // screen — which is what made a finished level look like it repeated.
+        input.jump = false;
+        input.jumpConsumed = true;
+        input.pointerClick = false;
+      }
+
       if (game.backToSelect) {
         scene = 'select';
         sel.openedAt = now;
         game.backToSelect = false;
+        input.jump = false;
+        input.jumpConsumed = true;
+        input.pointerClick = false;
       }
     }
   } catch (err) {

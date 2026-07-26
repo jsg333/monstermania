@@ -135,3 +135,44 @@ describe('what you see is what you can click', () => {
     }
   });
 });
+
+// Ethan: "after you complete a level, it just repeats." Two causes — finishing
+// sent you back to the menu instead of onward, and the button you pressed was
+// still held, so the menu instantly relaunched the level you'd just beaten.
+describe('finishing a level takes you to the next one', () => {
+  it('asks to advance rather than bouncing to the menu', async () => {
+    const play = await import('../src/scenes/play.js');
+    const { createState } = await import('../src/state.js');
+    const state = createState(world1[0]);
+    state.won = 1000;
+    const pressing = { ...idle, jump: true, jumpPressedAt: 2000, jumpConsumed: false };
+    play.update(state, pressing, 0.0167, 2000);
+    expect(state.advance).toBe(true);
+    expect(state.backToSelect).toBeFalsy();
+  });
+
+  it('ignores a button pressed in the first moment, so a win-frame press does not skip the screen', async () => {
+    const play = await import('../src/scenes/play.js');
+    const { createState } = await import('../src/state.js');
+    const state = createState(world1[0]);
+    state.won = 1000;
+    play.update(state, { ...idle, jump: true }, 0.0167, 1100);
+    expect(state.advance).toBeFalsy();
+  });
+
+  it('still lets ESC go back to the menu', async () => {
+    const play = await import('../src/scenes/play.js');
+    const { createState } = await import('../src/state.js');
+    const state = createState(world1[2]);
+    play.update(state, { ...idle, escape: true }, 0.0167, 1000);
+    expect(state.backToSelect).toBe(true);
+  });
+
+  it('knows which level comes next, for every level in the world', () => {
+    for (let i = 0; i < world1.length - 1; i++) {
+      expect(world1[i + 1].id).toBeTruthy();
+      expect(world1[i + 1].title).toBeTruthy();
+    }
+    expect(world1[world1.length - 1].id).toBe('1-6');   // nothing after the boss
+  });
+});

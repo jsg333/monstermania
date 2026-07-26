@@ -131,14 +131,14 @@ describe('the Big Ickio finishes the level', () => {
     expect(state.player.x).toBe(before.x);
   });
 
-  it('lets you play again with any button, after a short pause', () => {
+  // Used to restart the same level. Ethan pointed out that finishing should
+  // move you ON, so a press now asks to advance and main.js loads the next one.
+  it('moves you onward with any button, after a short pause', () => {
     const state = createState();
     state.won = 1000;
-    state.deaths = 7;
     const pressing = { left: false, right: false, jump: true, jumpPressedAt: 3000, jumpConsumed: false };
     play.update(state, pressing, 0.0167, 3000);
-    expect(state.won).toBe(0);
-    expect(state.deaths).toBe(0);
+    expect(state.advance).toBe(true);
   });
 });
 
