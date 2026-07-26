@@ -2,8 +2,11 @@
 
 A browser platformer designed by **Ethan (8)**. You have no powers of your own — every move comes from a monster standing in the level.
 
+**▶️ Play it: https://monstermania.pages.dev**
+
 - **What to build:** `MONSTERMANIA-GAME-DESIGN.md`
 - **How and in what order:** `BUILD-PLAN.md`
+- **Code:** https://github.com/jsg333/monstermania
 - **Status:** Phase 0 done ✅ · Phase 1 (the jump) in progress
 
 ## Running it
@@ -13,7 +16,12 @@ npm install     # first time only
 npm run dev     # play it in your browser
 npm test        # run the tests
 npm run build   # build to dist/
+npm run deploy:cloudflare   # publish to monstermania.pages.dev
 ```
+
+> **If `npm install` finishes suspiciously fast and then `vite: command not found`:**
+> your shell has `NODE_ENV=production` set, so npm skips devDependencies — and vite
+> and vitest are both devDependencies. Run `NODE_ENV=development npm install --include=dev`.
 
 ## Controls
 

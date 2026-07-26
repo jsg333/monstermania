@@ -10,6 +10,17 @@ Shared source of truth for any AI assistant working in this folder (Claude, Code
 - **Execution order:** `BUILD-PLAN.md` (phases; do them in order, one phase per PR series)
 - **Status:** Phase 0 scaffold done ✅ — Vite + Vitest, running/jumping test room, 23 tests green. Phase 1 is tuning the jump until Ethan says it feels right.
 - **Phasing:** make World 1 fun first. The level maker is **Phase 9** — do not build it early.
+- **Repo:** https://github.com/jsg333/monstermania (`main`) · **Live:** https://monstermania.pages.dev
+
+## Deploying
+
+Cloudflare Pages project `monstermania`, direct upload via wrangler:
+
+```bash
+npm run build && npm run deploy:cloudflare
+```
+
+Not yet connected to GitHub for automatic deploys — that's a one-time step in the Cloudflare dashboard (Workers & Pages → monstermania → Settings → Builds → Connect to Git; build command `npm run build`, output `dist`). Until then, deploys are manual.
 
 ## Open design questions (Ethan answers these, not the assistant)
 
