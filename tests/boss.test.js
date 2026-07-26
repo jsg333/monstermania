@@ -291,3 +291,52 @@ describe('you can always leave a level', () => {
     expect(state.backToSelect).toBeFalsy();
   });
 });
+
+// A gap the same width as your theoretical maximum jump is not a jump, it's a
+// coin flip — especially with no coyote time and no jump buffer. 1-2 shipped
+// with a 6-block gap against a 6.9-block maximum and a scripted playtest died
+// 11 times on it without ever getting past.
+describe('gaps leave room for error', () => {
+  const T = CONFIG.TILE;
+  const maxJump = (CONFIG.RUN_SPEED * (2 * CONFIG.JUMP_SPEED / CONFIG.GRAVITY)) / T;
+  const comfortable = maxJump * 0.7;
+
+  function gapsIn(level) {
+    // widest run of empty tiles on each row that has some floor
+    const out = [];
+    level.tiles.forEach((row, r) => {
+      if (!row.includes(1)) return;
+      let run = 0;
+      row.forEach((t, c) => {
+        if (t === 0) run++;
+        else { if (run > 0) out.push({ row: r, width: run, endsAt: c }); run = 0; }
+      });
+    });
+    return out;
+  }
+
+  function helpNear(level, row, col) {
+    const helpers = [...level.fungies, ...level.gogios, ...level.ickios];
+    if (helpers.some((h) => Math.abs(h.x / T - col) <= 6)) return true;
+    // or a ledge below to land on
+    for (let r = row + 1; r < level.rows; r++) {
+      if (level.tiles[r][Math.max(0, Math.min(level.cols - 1, col - 2))] === 1) return true;
+    }
+    return false;
+  }
+
+  it('never asks for a near-maximum jump in the teaching levels', () => {
+    const offenders = [];
+    for (const level of world1.slice(0, 3)) {
+      const floorRow = level.tiles.reduce((best, row, r) =>
+        row.filter((t) => t === 1).length > (level.tiles[best] || []).filter((t) => t === 1).length ? r : best, 0);
+      for (const gap of gapsIn(level)) {
+        if (gap.row !== floorRow) continue;
+        if (gap.width > comfortable && !helpNear(level, gap.row, gap.endsAt)) {
+          offenders.push(`${level.id}: ${gap.width}-block gap ending col ${gap.endsAt} (comfortable max ${comfortable.toFixed(1)})`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+});
