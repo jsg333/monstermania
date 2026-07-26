@@ -5,9 +5,9 @@ import { horizontalStep, verticalStep, canJump } from '../systems/physics.js';
 import { takeJump } from '../systems/input.js';
 import { moveAndCollide } from '../systems/collision.js';
 import { followCamera, easeCamera } from '../systems/camera.js';
-import { isDeadly, updateSnoozers, respawn, makePuff, stepPuff } from '../systems/hazards.js';
-import { applyBouncers } from '../systems/bouncers.js';
-import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff, drawGogio, drawFungy } from '../render/sprites.js';
+import { isDeadly, updateSnoozers, respawn, makePuff, stepPuff, collectGoo } from '../systems/hazards.js';
+import { applyBouncers, touchingSpikes } from '../systems/bouncers.js';
+import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff, drawGogio, drawFungy, drawGooDrop } from '../render/sprites.js';
 import { drawFps, drawHint } from '../render/ui.js';
 
 export function update(state, input, dt, now) {
@@ -45,7 +45,14 @@ export function update(state, input, dt, now) {
   const woke = updateSnoozers(p, state.level, state.checkpoint, CONFIG);
   state.checkpoint = woke.checkpoint;
 
-  if (isDeadly(p, state.level, CONFIG)) {
+  state.gooDrops += collectGoo(p, state.level, CONFIG);
+
+  // Ethan's rule: land on top of a monster or his spikes get you. Bouncing
+  // wins — if you landed cleanly this frame you are safe, even though your
+  // box briefly overlaps his sides on the way past.
+  const spiked = boing.bounced === null && touchingSpikes(p, state.level, CONFIG);
+
+  if (spiked || isDeadly(p, state.level, CONFIG)) {
     state.puff = state.puff.concat(makePuff(p));
     state.deaths++;
     state.deadUntil = now + CONFIG.RESPAWN_DELAY_MS;
@@ -77,6 +84,7 @@ export function draw(ctx, state, fps) {
   for (const s of level.snoozers) drawSnoozer(ctx, s, state.time, CONFIG);
   for (const f of level.fungies) drawFungy(ctx, f, state.time, CONFIG);
   for (const g of level.gogios) drawGogio(ctx, g, state.time, CONFIG);
+  for (const d of level.gooDrops) drawGooDrop(ctx, d, state.time, CONFIG);
   for (const g of level.grumps) drawGrump(ctx, g, state.time, CONFIG);
   if (!state.deadUntil) drawPlayer(ctx, state.player);
   drawPuff(ctx, state.puff);
@@ -84,6 +92,7 @@ export function draw(ctx, state, fps) {
   ctx.restore();
 
   drawFps(ctx, fps);
-  drawHint(ctx, 'Arrows or A/D to move  ·  ANY other button to jump  ·  land on Fungy and Gogio to be thrown', view.h - 40);
-  drawHint(ctx, `Restarts: ${state.deaths}`, view.h - 20);
+  drawHint(ctx, 'Arrows or A/D to move  ·  ANY other button to jump  ·  land on TOP of a monster — his sides have spikes!', view.h - 40);
+  const totalGoo = level.gooDrops.length;
+  drawHint(ctx, `Restarts: ${state.deaths}   ·   Goo Drops: ${state.gooDrops} / ${totalGoo}`, view.h - 20);
 }

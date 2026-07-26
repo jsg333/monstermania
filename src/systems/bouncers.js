@@ -18,7 +18,27 @@ import { overlaps, playerBox } from './hazards.js';
 // one from the side does nothing — otherwise you'd get flung around by
 // accident every time you brushed past.
 export function landingBox(m, cfg = CONFIG) {
-  return { x: m.x + 2, y: m.y, w: cfg.TILE - 4, h: cfg.TILE * 0.55 };
+  return { x: m.x + 2, y: m.y, w: cfg.TILE - 4, h: cfg.TILE * cfg.LANDING_BAND };
+}
+
+// Ethan's rule: land on top of a monster or his spikes get you. The spikes
+// are everything BELOW the landing band, shaved in on each side so brushing
+// past doesn't kill you.
+//
+// This makes the helpful monsters dangerous too, which is a big jump in
+// difficulty — especially with no coyote time and no jump buffer. That's why
+// LANDING_BAND is generous: the top of a monster is a big, forgiving target
+// and only the lower sides bite.
+export function spikeBox(m, cfg = CONFIG) {
+  const T = cfg.TILE;
+  const top = T * cfg.LANDING_BAND;
+  return { x: m.x + cfg.SPIKE_INSET, y: m.y + top, w: T - cfg.SPIKE_INSET * 2, h: T - top };
+}
+
+export function touchingSpikes(player, level, cfg = CONFIG) {
+  const pb = playerBox(player);
+  const spiky = [...level.gogios, ...level.fungies];
+  return spiky.some((m) => overlaps(pb, spikeBox(m, cfg)));
 }
 
 // `fallingVy` is how fast you were falling when you ARRIVED, before the floor

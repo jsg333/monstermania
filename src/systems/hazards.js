@@ -83,3 +83,21 @@ export function stepPuff(particles, dt) {
     }))
     .filter((p) => p.life > 0);
 }
+
+// Goo Drops — coins you collect. Ethan's call: they buy character perks
+// rather than acting as checkpoints, so grabbing one is a reward for going
+// somewhere hard, not a safety net.
+export function gooBox(d, cfg = CONFIG) {
+  const T = cfg.TILE;
+  return { x: d.x + 4, y: d.y + 4, w: T - 8, h: T - 8 };
+}
+
+export function collectGoo(player, level, cfg = CONFIG) {
+  const pb = playerBox(player);
+  let taken = 0;
+  for (const d of level.gooDrops) {
+    if (d.taken) continue;
+    if (overlaps(pb, gooBox(d, cfg))) { d.taken = true; taken++; }
+  }
+  return taken;
+}

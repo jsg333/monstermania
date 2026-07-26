@@ -47,6 +47,11 @@ export const CONFIG = {
   RESPAWN_DELAY_MS: 400,    // must stay under 1000. Dying has to be FAST.
   HAZARD_FORGIVENESS: 7,    // pixels shaved off every spike. Bigger = kinder.
 
+  // ---- Ethan's rule: land on TOP of a monster, or his spikes get you ----
+  LANDING_BAND: 0.62,       // how much of a monster's height counts as "the top".
+                            // Bigger = easier to land safely. Do not go below ~0.5.
+  SPIKE_INSET: 6,           // pixels shaved off a monster's side spikes
+
   // ---- Camera ----
   CAMERA_DEADZONE: 70,      // how far you can drift from the middle before it follows
   CAMERA_EASE: 0.12,        // how smoothly it glides. 1 = snaps instantly.
@@ -56,7 +61,8 @@ export const CONFIG = {
   BOSS_WINDUP_MS: 500,      // he squishes before he jumps, so you get a fair warning
   BOSS_SPEEDUP_PER_HIT: 1.25,
 
-  // ---- Goo Drops ----
+  // ---- Goo Drops (coins you collect for character perks) ----
+  GOO_SPIN_MS: 1400,        // how fast the coin spins
   GOO_PER_LEVEL: 3,
   GOO_PER_PART: 5,
   BONUS_LEVEL_AT: [15, 30, 45, 60]

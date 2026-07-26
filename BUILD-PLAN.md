@@ -84,13 +84,20 @@ Spike hitboxes are shaved 7px on every side (`HAZARD_FORGIVENESS`). Nothing make
 
 **Still needs Ethan's verdict:** die twenty times on purpose and check it never feels annoying.
 
-## Phase 3 — Fungy and Gogio
+## Phase 3 — Fungy and Gogio ✅ DONE
 
 1. **Fungy:** low forward hop in the direction you're moving. Never tires. Infinite use.
 2. **Gogio:** big straight-up bounce. Squishes flatter on each of 3 consecutive bounces, then recovers after a pause.
 3. Squash-and-stretch animation on both — this is where the game starts feeling alive.
 
-**Done when:** the two bouncers feel like *different tools*, not a good one and a worse one. Tests for Gogio's tiring/recovery state machine.
+**Done.** Fungy skips you forward and never tires; Gogio launches you straight up and flattens with each bounce in a row. Both squash and stretch.
+
+Ethan then added three rulings during playtesting:
+- monsters look scarier (spikes, glaring eyes, jagged grins)
+- **you must land on TOP or the side spikes get you** — `LANDING_BAND` keeps the top forgiving
+- the reward on the high shelf is a **Goo Drop** (a coin for character perks), not a checkpoint
+
+Three bugs surfaced here that pure-function tests could not see: monsters on the ground were unbounceable, levels never reset between plays, and running clamped away Fungy's forward throw. See `tests/integration.test.js`.
 
 ## Phase 4 — Ickio ⭐
 

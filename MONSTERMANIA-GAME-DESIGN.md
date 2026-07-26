@@ -58,6 +58,14 @@ Very, very, very, very bouncy. Stand on top of him and you go **way** up. Straig
 
 **The upgrade:** Gogio gets tired. Bounce him three times in a row and he squishes flatter each time — smaller and smaller bounce — until he takes a breath and puffs back up. So you can't just sit there bouncing forever. You have to **use the big bounce at the right moment.**
 
+### ⚠️ Land on TOP, or the spikes get you — Ethan's rule
+
+Every bouncing monster has **spikes around his lower sides**. Land cleanly on his head and he throws you. Walk into him, or clip his side on the way down, and you're out.
+
+This changes what the monsters are. They aren't just friendly furniture any more — they're **tools that bite**. Using one is a decision with a risk attached, and that's what makes a jump exciting instead of automatic.
+
+**The catch to watch:** Monstermania is already strict — no coyote time, no jump buffer — and now the things you *must* use can also kill you. That's three hard rules stacked on top of each other. So the top of every monster is a deliberately **big, forgiving target** (`LANDING_BAND` in config), and the spikes are shaved in on each side. If playtesters start rage-quitting on Fungy, that number is the dial to turn — not the rule.
+
 ### Fungy — the Little Hopper 🍄
 
 Looks like a mushroom. Less bouncy than Gogio.
@@ -325,6 +333,9 @@ The designer has spoken. These beat anything else in this document.
 | 7 | **You hit Big Gogio by landing on his head** — jumping, not clicking. | ✅ In the boss design |
 | 8 | **Goo Drops unlock character parts AND secret bonus levels.** Both. | ✅ Goo Drops section added |
 | 9 | **Easy start, hard finish.** World 1 for everyone, World 4 for pros. | ✅ Difficulty plan added |
+| 10 | **The monsters should look scarier.** | ✅ Spikes, glaring eyes, jagged grins |
+| 11 | **You must land on TOP of a monster — his sides have spikes.** | ✅ Built, with a generous top |
+| 12 | **The prize on the high shelf is a coin, not a checkpoint.** Goo Drops buy character perks. | ✅ Built |
 
 Two of these overruled me, and Ethan was right to make the call — it's his game. Rulings 3 and 4 are the ones we'll test with real players before anyone declares victory.
 

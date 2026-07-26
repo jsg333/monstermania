@@ -4,7 +4,7 @@
 //   1  a solid block          ^  a Grump (spikes)
 //   .  empty air              S  a Snoozer (checkpoint)
 //   P  where you start        f  a Fungy (small forward hop)
-//                             g  a Gogio (big bounce, gets tired)
+//   o  a Goo Drop (a coin)    g  a Gogio (big bounce, gets tired)
 //
 // Everything that isn't a solid block becomes empty air, so you can leave
 // blank space or use dots, whichever is easier to see.
@@ -21,6 +21,7 @@ export function parseLevel(name, map, cfg = CONFIG) {
   const snoozers = [];
   const fungies = [];
   const gogios = [];
+  const gooDrops = [];
   let spawn = null;
 
   rows.forEach((row, r) => {
@@ -32,6 +33,7 @@ export function parseLevel(name, map, cfg = CONFIG) {
       if (ch === 'S') snoozers.push({ x: c * T, y: r * T, awake: false });
       if (ch === 'f') fungies.push({ x: c * T, y: r * T, lastBounceAt: -Infinity, squash: 0 });
       if (ch === 'g') gogios.push({ x: c * T, y: r * T, bounces: 0, lastBounceAt: -Infinity, squash: 0 });
+      if (ch === 'o') gooDrops.push({ x: c * T, y: r * T, taken: false });
       if (ch === 'P') spawn = { x: c * T + 4, y: r * T };
     });
   });
@@ -39,7 +41,7 @@ export function parseLevel(name, map, cfg = CONFIG) {
   if (!spawn) throw new Error(`Level "${name}" has no P (start point)`);
 
   return {
-    name, tiles, grumps, snoozers, fungies, gogios, spawn,
+    name, tiles, grumps, snoozers, fungies, gogios, gooDrops, spawn,
     cols: width,
     rows: rows.length,
     widthPx: width * T,
@@ -56,6 +58,7 @@ export function instantiate(level) {
     ...level,
     snoozers: level.snoozers.map((s) => ({ ...s, awake: false })),
     fungies: level.fungies.map((f) => ({ ...f, lastBounceAt: -Infinity, squash: 0 })),
-    gogios: level.gogios.map((g) => ({ ...g, bounces: 0, lastBounceAt: -Infinity, squash: 0 }))
+    gogios: level.gogios.map((g) => ({ ...g, bounces: 0, lastBounceAt: -Infinity, squash: 0 })),
+    gooDrops: level.gooDrops.map((d) => ({ ...d, taken: false }))
   };
 }
