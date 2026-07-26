@@ -296,6 +296,150 @@ describe('you can always leave a level', () => {
 // coin flip — especially with no coyote time and no jump buffer. 1-2 shipped
 // with a 6-block gap against a 6.9-block maximum and a scripted playtest died
 // 11 times on it without ever getting past.
+describe('lethal gaps leave room for error', () => {
+  const T = CONFIG.TILE;
+  const maxJump = (CONFIG.RUN_SPEED * (2 * CONFIG.JUMP_SPEED / CONFIG.GRAVITY)) / T;
+  const comfortable = maxJump * 0.7;
+
+  // Only gaps you can DIE in matter. A dip with a floor under it is a feature;
+  // a hole straight down to nothing is the thing that needs a fair width.
+  // (The first version of this rule measured gaps in "the row with the most
+  // floor", which is meaningless once a level has terrain at several heights.)
+  function lethalGaps(level) {
+    const found = [];
+    for (let r = 0; r < level.rows; r++) {
+      let run = 0;
+      let seenGround = false;      // a gap must have ground on BOTH sides —
+                                   // empty space below the world is not a gap
+      for (let c = 1; c < level.cols; c++) {
+        const solidHere = level.tiles[r][c] === 1;
+        let anythingBelow = false;
+        for (let rr = r + 1; rr < level.rows; rr++) {
+          if (level.tiles[rr][c] === 1) { anythingBelow = true; break; }
+        }
+
+        if (solidHere) {
+          if (seenGround && run > 0) found.push({ row: r, width: run, endsAt: c });
+          seenGround = true;
+          run = 0;
+        } else if (seenGround) {
+          if (anythingBelow) run = 0;   // there's a floor to land on: not lethal
+          else run++;
+        }
+      }
+    }
+    return found;
+  }
+
+  function helpNear(level, col) {
+    const helpers = [...level.fungies, ...level.gogios, ...level.ickios];
+    return helpers.some((h) => Math.abs(h.x / T - col) <= 8);
+  }
+
+  it('never asks for a near-maximum jump over a deadly hole', () => {
+    const offenders = [];
+    for (const level of world1.slice(0, 3)) {
+      for (const gap of lethalGaps(level)) {
+        if (gap.width > comfortable && !helpNear(level, gap.endsAt)) {
+          offenders.push(`${level.id}: ${gap.width}-block deadly gap ending col ${gap.endsAt}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('has no deadly holes at all in 1-1', () => {
+    expect(lethalGaps(world1[0])).toEqual([]);
+  });
+});
+
+// A coin you cannot reach is worse than no coin — it reads as a bug to a kid.
+describe('Goo Drops sit somewhere a player could actually get to', () => {
+  it('never floats a coin more than a jump above the nearest solid ground', () => {
+    const T = CONFIG.TILE;
+    const jumpTiles = ((CONFIG.JUMP_SPEED ** 2) / (2 * CONFIG.GRAVITY)) / T;
+    for (const level of world1) {
+      for (const d of level.gooDrops) {
+        const col = d.x / T;
+        const row = d.y / T;
+        let floorBelow = null;
+        for (let r = row + 1; r < level.rows; r++) {
+          if (level.tiles[r][col] === 1) { floorBelow = r; break; }
+        }
+        expect(floorBelow, `${level.id} coin at col ${col} has nothing under it`).not.toBe(null);
+        expect(floorBelow - row, `${level.id} coin at col ${col} floats too high`)
+          .toBeLessThanOrEqual(Math.ceil(jumpTiles) + 1);
+      }
+    }
+  });
+});
+
+// 1-2 shipped with a checkpoint floating over a pit. Touch it mid-jump and it
+// became your respawn point — so every later death dropped you into the void
+// and killed you again, forever. The level was literally unwinnable.
+//
+// A checkpoint IS a promise that you'll be safe when you come back.
+describe('every checkpoint is somewhere safe to reappear', () => {
+  it('never floats a Snoozer over a pit', async () => {
+    const { playground } = await import('../src/data/levels/playground.js');
+    const T = CONFIG.TILE;
+    const bad = [];
+    for (const level of [...world1, playground]) {
+      for (const s of level.snoozers) {
+        const col = s.x / T, row = s.y / T;
+        let floor = null;
+        for (let r = row + 1; r < level.rows; r++) {
+          if (level.tiles[r][col] === 1) { floor = r; break; }
+        }
+        if (floor === null) bad.push(`${level.id || 'playground'}: Snoozer col ${col} has NOTHING below it`);
+        else if (floor - row > 1) bad.push(`${level.id || 'playground'}: Snoozer col ${col} floats ${floor - row} tiles up`);
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('never puts a Snoozer where a Grump can reach you on respawn', () => {
+    const T = CONFIG.TILE;
+    const bad = [];
+    for (const level of world1) {
+      for (const s of level.snoozers) {
+        for (const g of level.grumps) {
+          if (Math.abs(g.x - s.x) < T && Math.abs(g.y - s.y) < T) {
+            bad.push(`${level.id}: Snoozer and Grump on top of each other at col ${s.x / T}`);
+          }
+        }
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+// There was no way out of a level except finishing it. A kid stuck on a hard
+// jump — or on an unwinnable one — had to reload the page.
+describe('you can always leave a level', () => {
+  it('goes back to the menu when you press Escape', async () => {
+    const play = await import('../src/scenes/play.js');
+    const { createState } = await import('../src/state.js');
+    const state = createState(world1[2]);
+    const input = { left: false, right: false, jump: false, escape: true, jumpPressedAt: -1e9, jumpConsumed: true };
+    play.update(state, input, 0.0167, 1000);
+    expect(state.backToSelect).toBe(true);
+  });
+
+  it('does not leave when you are just playing', async () => {
+    const play = await import('../src/scenes/play.js');
+    const { createState } = await import('../src/state.js');
+    const state = createState(world1[2]);
+    const input = { left: false, right: true, jump: false, escape: false, jumpPressedAt: -1e9, jumpConsumed: true };
+    play.update(state, input, 0.0167, 1000);
+    expect(state.backToSelect).toBeFalsy();
+  });
+});
+
+// A gap the same width as your theoretical maximum jump is not a jump, it's a
+// coin flip — especially with no coyote time and no jump buffer. 1-2 shipped
+// with a 6-block gap against a 6.9-block maximum and a scripted playtest died
+// 11 times on it without ever getting past.
 describe('gaps leave room for error', () => {
   const T = CONFIG.TILE;
   const maxJump = (CONFIG.RUN_SPEED * (2 * CONFIG.JUMP_SPEED / CONFIG.GRAVITY)) / T;
@@ -392,5 +536,21 @@ describe('levels do not share a silhouette', () => {
   it('varies the size and proportions of the levels', () => {
     const shapes = world1.slice(0, 5).map((l) => `${l.cols}x${l.rows}`);
     expect(new Set(shapes).size).toBeGreaterThanOrEqual(4);
+  });
+});
+
+// Every level had a wall on the left and nothing on the right, so running off
+// the end dropped you into the void. In 1-1 — the level that is supposed to be
+// impossible to fail — that was the only way to die.
+describe('levels are closed on both sides', () => {
+  it('walls the right edge as well as the left', async () => {
+    const { playground } = await import('../src/data/levels/playground.js');
+    for (const level of [...world1, playground]) {
+      const last = level.cols - 1;
+      const openRows = level.tiles.filter((row) => row[last] !== 1).length;
+      expect(openRows, `${level.id || 'playground'} right edge`).toBe(0);
+      const leftOpen = level.tiles.filter((row) => row[0] !== 1).length;
+      expect(leftOpen, `${level.id || 'playground'} left edge`).toBe(0);
+    }
   });
 });
