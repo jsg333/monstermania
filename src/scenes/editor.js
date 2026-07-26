@@ -16,7 +16,7 @@ export const TABS = [
     name: 'Platforms',
     tools: [
       { ch: '1', label: 'Block', hint: 'Solid ground. Flat on top.' },
-      { ch: '.', label: 'Rubber', hint: 'Erase — takes things away.' }
+      { ch: '.', label: 'Eraser', hint: 'Rubs things out.' }
     ]
   },
   {

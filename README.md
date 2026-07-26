@@ -7,7 +7,8 @@ A browser platformer designed by **Ethan (8)**. You have no powers of your own �
 - **What to build:** `MONSTERMANIA-GAME-DESIGN.md`
 - **How and in what order:** `BUILD-PLAN.md`
 - **Code:** https://github.com/jsg333/monstermania
-- **Status:** Phase 0 done ✅ · Phase 1 (the jump) in progress
+- **Where we are:** `MEMORY.md`
+- **Status:** World 1, the Monster Maker and the Level Maker are all done ✅ · Worlds 2–4 are next
 
 ## Running it
 
@@ -40,10 +41,10 @@ Try these first:
 
 | Change this | To see what happens |
 |---|---|
-| `JUMP_SPEED: 700` → `1000` | You jump way higher |
-| `GRAVITY: 2200` → `1200` | Everything goes floaty, like the moon |
-| `RUN_SPEED: 260` → `500` | You run super fast |
-| `JUMP_CUTOFF: 0.38` → `1.0` | Tapping and holding do the same thing (worse!) |
+| `JUMP_SPEED: 620` → `1000` | You jump way higher |
+| `GRAVITY: 1400` → `700` | Everything goes floaty, like the moon |
+| `RUN_SPEED: 250` → `500` | You run super fast |
+| `JUMP_CUTOFF: 0.4` → `1.0` | Tapping and holding do the same thing (worse!) |
 
 **Change one number at a time**, then play it. That's how you learn what each one actually does. If you break something, set it back.
 
