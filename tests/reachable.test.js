@@ -61,9 +61,18 @@ function solve(level) {
       }
     }
 
-    // a Gogio you can reach launches you a very long way up
-    if (monsterAt(level.gogios, c, r) || monsterAt(level.gogios, c - 1, r) || monsterAt(level.gogios, c + 1, r)) {
-      for (let dc = -8; dc <= 8; dc++) for (let dr = -GOGIO_UP; dr <= 0; dr++) add(c + dc, r + dr);
+    // A Gogio you can reach launches you a long way up — but only as far as
+    // the first thing above his head. Modelling the launch without modelling
+    // the ceiling is how a Gogio parked under a platform passed as "fine".
+    const nearGogio = level.gogios.find(
+      (m) => Math.abs(Math.round(m.x / T) - c) <= 1 && Math.abs(Math.round(m.y / T) - r) <= 1
+    );
+    if (nearGogio) {
+      const gcol = Math.round(nearGogio.x / T);
+      let ceiling = 0;
+      for (let rr = r - 1; rr >= 0; rr--) if (solid(gcol, rr)) { ceiling = rr + 1; break; }
+      const top = Math.max(ceiling, r - GOGIO_UP);
+      for (let dc = -8; dc <= 8; dc++) for (let nr = top; nr <= r; nr++) add(c + dc, nr);
     }
     // a Fungy throws you a long way sideways
     if (monsterAt(level.fungies, c, r) || monsterAt(level.fungies, c - 1, r) || monsterAt(level.fungies, c + 1, r)) {

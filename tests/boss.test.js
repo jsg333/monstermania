@@ -174,18 +174,23 @@ describe('1-1 is genuinely safe, as the difficulty plan promises', () => {
 // bonked your head on its underside. Two of 1-3's three coins were
 // unreachable. This rule stops it happening again.
 describe('every Gogio has clear sky above him', () => {
-  const CLEARANCE = 6;   // tiles
-
-  it('never puts a ceiling right above a bouncer', () => {
+  // Jeff found a Gogio sitting directly under the top platform in 1-5: bounce
+  // and you smack into its underside, so the platform was unreachable. The old
+  // rule only looked 6 tiles up, and that platform was 9 tiles up.
+  //
+  // Gogio throws you roughly 15 tiles. Anything solid in his column is
+  // something you will hit, so the rule is simply: nothing above him. If you
+  // want a player to land on a platform, put the Gogio BESIDE it.
+  it('has nothing solid anywhere above a Gogio', () => {
     const T = CONFIG.TILE;
     const offenders = [];
     for (const level of world1) {
       for (const g of level.gogios) {
         const col = g.x / T;
         const row = g.y / T;
-        for (let r = row - 1; r >= Math.max(0, row - CLEARANCE); r--) {
+        for (let r = row - 1; r >= 0; r--) {
           if (level.tiles[r][col] === 1) {
-            offenders.push(`${level.id}: Gogio at col ${col} has a ceiling ${row - r} tiles above`);
+            offenders.push(`${level.id}: Gogio col ${col} is under a platform ${row - r} tiles up`);
             break;
           }
         }
@@ -194,18 +199,10 @@ describe('every Gogio has clear sky above him', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('never sits a Gogio directly beneath the platform he launches you to', () => {
+  it('launches you higher than anything you are asked to reach', () => {
     const T = CONFIG.TILE;
-    for (const level of world1) {
-      for (const g of level.gogios) {
-        const col = g.x / T;
-        const row = g.y / T;
-        // the nearest platform above must be offset sideways, not overhead
-        for (let r = row - 1; r >= Math.max(0, row - CLEARANCE); r--) {
-          expect(level.tiles[r][col], `${level.id} Gogio col ${col} blocked at row ${r}`).toBe(0);
-        }
-      }
-    }
+    const reach = ((CONFIG.GOGIO_BOUNCE_SPEED ** 2) / (2 * CONFIG.GRAVITY)) / T;
+    expect(reach).toBeGreaterThan(10);
   });
 });
 
