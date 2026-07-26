@@ -110,12 +110,16 @@ export const PALETTE_W = 168;
 
 export function gridRect(view) {
   const pad = 14;
-  const x = PALETTE_W + pad;
-  const y = 64;
-  const w = view.w - x - pad;
-  const h = view.h - y - 96;
-  const scale = Math.min(w / (GRID_W * CONFIG.TILE), h / (GRID_H * CONFIG.TILE));
-  return { x, y, scale, w: GRID_W * CONFIG.TILE * scale, h: GRID_H * CONFIG.TILE * scale };
+  const boxX = PALETTE_W + pad;
+  const boxY = 64;
+  const boxW = Math.max(80, view.w - boxX - pad);
+  const boxH = Math.max(80, view.h - boxY - 96);
+  const scale = Math.min(boxW / (GRID_W * CONFIG.TILE), boxH / (GRID_H * CONFIG.TILE));
+  const w = GRID_W * CONFIG.TILE * scale;
+  const h = GRID_H * CONFIG.TILE * scale;
+  // Centre it in the space left over, so a tall or narrow window doesn't
+  // strand the grid in a corner with half the screen empty.
+  return { x: boxX + (boxW - w) / 2, y: boxY + (boxH - h) / 2, scale, w, h };
 }
 
 export function cellAt(view, px, py) {

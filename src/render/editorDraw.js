@@ -123,7 +123,7 @@ export function drawEditor(ctx, ed, view, hover) {
 
   // ---- is this level any good? ----
   const check = ed.lastCheck;
-  const barY = view.h - 60;
+  const barY = Math.min(view.h - 60, g.y + g.h + 14);
   if (check) {
     if (check.ok && !check.warnings.length) {
       ctx.fillStyle = '#7dff2e';
@@ -153,6 +153,7 @@ export function drawEditor(ctx, ed, view, hover) {
   ctx.fillStyle = '#5e7a68';
   ctx.font = '11px system-ui, sans-serif';
   ctx.fillText('ESC to leave  ·  your level saves by itself', g.x, view.h - 12);
+  ctx.fillText('Drag to draw lots at once', g.x + 260, view.h - 12);
 }
 
 function wrap(ctx, text, x, y, maxW, lh) {
