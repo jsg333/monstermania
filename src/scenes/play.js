@@ -3,7 +3,7 @@
 
 import CONFIG from '../data/config.js';
 import { horizontalStep, verticalStep } from '../systems/physics.js';
-import { moveAndCollide } from '../systems/collision.js';
+import { moveAndCollide, isSolid } from '../systems/collision.js';
 import { drawFps, drawHint } from '../render/ui.js';
 
 export function update(state, input, dt, now) {
@@ -28,9 +28,20 @@ export function update(state, input, dt, now) {
 export function draw(ctx, state, fps) {
   const T = CONFIG.TILE;
   const { level, player } = state;
+  const viewW = ctx.canvas.width / (window.devicePixelRatio || 1);
+  const viewH = ctx.canvas.height / (window.devicePixelRatio || 1);
+  const levelW = level.tiles[0].length * T;
+  const levelH = level.tiles.length * T;
 
   ctx.fillStyle = '#10241a';
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.fillRect(0, 0, viewW, viewH);
+
+  // Phase 1 only: the whole room fits on screen, so just centre it.
+  // Phase 2 replaces this with a camera that follows the player.
+  const offX = Math.round((viewW - levelW) / 2);
+  const offY = Math.round((viewH - levelH) / 2);
+  ctx.save();
+  ctx.translate(offX, offY);
 
   // Platforms — flat on top, just like Ethan said.
   for (let r = 0; r < level.tiles.length; r++) {
@@ -38,8 +49,13 @@ export function draw(ctx, state, fps) {
       if (level.tiles[r][c] !== 1) continue;
       ctx.fillStyle = '#2f6b45';
       ctx.fillRect(c * T, r * T, T, T);
-      ctx.fillStyle = '#4ea86a';
-      ctx.fillRect(c * T, r * T, T, 5);
+      // Only highlight a surface you could actually stand on. Without this
+      // check, a stack of wall tiles gets a stripe every 32px and reads as
+      // a ladder instead of a wall.
+      if (!isSolid(level, c, r - 1)) {
+        ctx.fillStyle = '#4ea86a';
+        ctx.fillRect(c * T, r * T, T, 5);
+      }
     }
   }
 
@@ -50,7 +66,9 @@ export function draw(ctx, state, fps) {
   const eyeX = player.x + (player.facing > 0 ? 14 : 4);
   ctx.fillRect(eyeX, player.y + 8, 5, 6);
 
+  ctx.restore();
+
   drawFps(ctx, fps);
-  drawHint(ctx, 'Arrows or A/D to move  ·  ANY other button to jump  ·  hold longer = jump higher', ctx.canvas.height - 40);
-  drawHint(ctx, `Restarts: ${state.deaths}`, ctx.canvas.height - 20);
+  drawHint(ctx, 'Arrows or A/D to move  \u00b7  ANY other button to jump  \u00b7  hold longer = jump higher', viewH - 40);
+  drawHint(ctx, `Restarts: ${state.deaths}`, viewH - 20);
 }
