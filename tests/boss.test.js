@@ -463,13 +463,28 @@ describe('1-2 is about the chasm Fungy throws you over', () => {
     return run;
   }
 
+  function landingWidth(level, row) {
+    const cells = level.tiles[row];
+    let i = 1;
+    while (i < cells.length && cells[i] !== 1) i++;
+    while (i < cells.length && cells[i] === 1) i++;
+    while (i < cells.length && cells[i] !== 1) i++;
+    let run = 0;
+    while (i < cells.length && cells[i] === 1) { run++; i++; }
+    return run;
+  }
+
   it('splits the canyon with a gap wider than any jump', () => {
     const jumpReach = (CONFIG.RUN_SPEED * (2 * CONFIG.JUMP_SPEED / CONFIG.GRAVITY)) / T;
     expect(chasmWidth(world1[1], 16)).toBeGreaterThan(jumpReach);
   });
 
-  it('keeps the chasm inside what a Fungy throw can cover', () => {
-    expect(chasmWidth(world1[1], 16)).toBeLessThan(11);
+  it('keeps the teaching jump to a seven-tile gap', () => {
+    expect(chasmWidth(world1[1], 16)).toBe(7);
+  });
+
+  it('gives the Fungy jump a five-tile landing platform', () => {
+    expect(landingWidth(world1[1], 16)).toBe(5);
   });
 
   it('puts Fungy on the near side, where you need him', () => {
