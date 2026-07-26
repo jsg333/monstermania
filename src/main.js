@@ -143,6 +143,7 @@ try { requestAnimationFrame(frame); } catch (err) { crashed(err); }
 // to guess it from pixel colours — which is unreliable and, when the reads
 // are expensive, actively slows the game down and produces false results.
 window.__mm = {
+  build: typeof __BUILD__ === 'string' ? __BUILD__ : 'dev',
   get lastError() { return lastError && (lastError.stack || String(lastError)); },
   get scene() { return scene; },
   get game() { return game; },

@@ -18,6 +18,7 @@ const noInput = { left: false, right: false, jump: false, jumpPressedAt: -Infini
 
 beforeAll(() => {
   globalThis.window = { devicePixelRatio: 1 };
+  globalThis.__BUILD__ = 'test';
 });
 
 // This is the test that would have caught the crash: the real scene, running

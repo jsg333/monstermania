@@ -78,5 +78,12 @@ export function draw(ctx, sel, view) {
   ctx.fillStyle = '#9cff6b';
   ctx.font = 'bold 15px system-ui, sans-serif';
   ctx.fillText('← →  to choose      ANY other button to play      ↑  Monster Maker', view.w / 2, view.h - 60);
+
+  // Which build am I actually running? Answering that by eye beats guessing.
+  ctx.fillStyle = '#3f5a48';
+  ctx.font = '11px ui-monospace, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(`build ${typeof __BUILD__ === 'string' ? __BUILD__ : 'dev'}`, view.w - 14, view.h - 14);
+  ctx.textAlign = 'left';
   ctx.textAlign = 'left';
 }
