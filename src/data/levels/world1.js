@@ -150,12 +150,12 @@ const L1_6 = `
 `;
 
 export const world1 = [
-  parseLevel('Hello, Monstermania', L1_1, undefined, { id: '1-1', title: 'Hello, Monstermania' }),
-  parseLevel('Meet Fungy', L1_2, undefined, { id: '1-2', title: 'Meet Fungy' }),
-  parseLevel('Meet Gogio', L1_3, undefined, { id: '1-3', title: 'Meet Gogio' }),
-  parseLevel('Grumpy Neighbours', L1_4, undefined, { id: '1-4', title: 'Grumpy Neighbours' }),
-  parseLevel('Ickio!', L1_5, undefined, { id: '1-5', title: 'Ickio!' }),
-  parseLevel('BOSS: Big Gogio', L1_6, undefined, { id: '1-6', title: 'BOSS: Big Gogio', boss: true })
+  parseLevel('Hello, Monstermania', L1_1, undefined, { id: '1-1', title: 'Hello, Monstermania', theme: 'slimeLab' }),
+  parseLevel('Meet Fungy', L1_2, undefined, { id: '1-2', title: 'Meet Fungy', theme: 'slimeLab' }),
+  parseLevel('Meet Gogio', L1_3, undefined, { id: '1-3', title: 'Meet Gogio', theme: 'slimeLab' }),
+  parseLevel('Grumpy Neighbours', L1_4, undefined, { id: '1-4', title: 'Grumpy Neighbours', theme: 'slimeLab' }),
+  parseLevel('Ickio!', L1_5, undefined, { id: '1-5', title: 'Ickio!', theme: 'slimeLab' }),
+  parseLevel('BOSS: Big Gogio', L1_6, undefined, { id: '1-6', title: 'BOSS: Big Gogio', boss: true, theme: 'slimeLab' })
 ];
 
 export default world1;

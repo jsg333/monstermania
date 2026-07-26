@@ -127,14 +127,18 @@ Touch a Grump or fall in a pit and you're **out** — you vanish in a puff of gr
 
 Flat on top, exactly like you said. And your "different designs for different taste" idea becomes **Theme Packs** — the whole level changes look:
 
-| Theme | Looks like |
-|---|---|
-| Slime Lab | Green goo, pipes, bubbling tanks (the starter theme) |
-| Candy Cave | Peppermint platforms, gumdrops, licorice ropes |
-| Sky Castle | Clouds, floating stone blocks, sunshine |
-| Haunted Hollow | Purple fog, spooky-but-silly ghosts, jack-o'-lanterns |
+| World | Theme | Looks like |
+|---|---|---|
+| 1 | **Slime Lab** | Green goo, pipes, bubbling tanks |
+| 2 | **Gluetown** | Everything sticks — Stickio's world, where walls are floors |
+| 3 | **Cloud Castle** | High, floaty and a long way down — Slowmo's world |
+| 4 | **Monster Mountain** | Everything at once. Good luck. |
 
-**🎨 ETHAN DECIDES:** Pick the four theme names.
+Ethan picked these on 25 July 2026. Three things make them work, and they're worth remembering when naming anything else in this game:
+
+- **Short beats clever.** "Gluetown" survives being shouted across a room. "The Adhesive Caverns" does not.
+- **Say what it's made of.** "Slime Lab" tells you what the place looks like before you get there.
+- **Match the monster.** World 2 is Stickio's, so a sticky name does free work — the theme and the mechanic back each other up.
 
 **Moving platforms** should show up in World 2: ones that slide side to side, ones that fall a second after you land on them.
 

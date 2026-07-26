@@ -13,6 +13,7 @@ import { stepBoss, bossCollision, damageBoss, bossBox, isWindingUp } from '../sy
 import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff, drawGogio, drawFungy, drawGooDrop, drawIckio, drawBigIckio } from '../render/sprites.js';
 import { drawFps, drawHint } from '../render/ui.js';
 import { sfx } from '../systems/sound.js';
+import { themeFor } from '../data/themes.js';
 
 export function update(state, input, dt, now) {
   state.puff = stepPuff(state.puff, dt);
@@ -123,7 +124,7 @@ export function draw(ctx, state, fps) {
     state.cam = easeCamera(state.cam, target, 1 / 60, CONFIG);
   }
 
-  ctx.fillStyle = '#10241a';
+  ctx.fillStyle = themeFor(level).sky;
   ctx.fillRect(0, 0, view.w, view.h);
 
   ctx.save();

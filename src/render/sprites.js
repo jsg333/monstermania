@@ -9,9 +9,11 @@ import CONFIG from '../data/config.js';
 import { isSolid } from '../systems/collision.js';
 import { squashAmount, tiredAmount } from '../systems/bouncers.js';
 import { BODIES, COLORS, EYES, MOUTHS, HATS } from '../data/parts.js';
+import { themeFor } from '../data/themes.js';
 
 export function drawLevel(ctx, level, cam, view, cfg = CONFIG) {
   const T = cfg.TILE;
+  const theme = themeFor(level);
   const c0 = Math.max(0, Math.floor(cam.x / T) - 1);
   const c1 = Math.min(level.cols - 1, Math.ceil((cam.x + view.w) / T) + 1);
   const r0 = Math.max(0, Math.floor(cam.y / T) - 1);
@@ -20,10 +22,10 @@ export function drawLevel(ctx, level, cam, view, cfg = CONFIG) {
   for (let r = r0; r <= r1; r++) {
     for (let c = c0; c <= c1; c++) {
       if (level.tiles[r][c] !== 1) continue;
-      ctx.fillStyle = '#2f6b45';
+      ctx.fillStyle = theme.block;
       ctx.fillRect(c * T, r * T, T, T);
       if (!isSolid(level, c, r - 1)) {
-        ctx.fillStyle = '#4ea86a';
+        ctx.fillStyle = theme.blockTop;
         ctx.fillRect(c * T, r * T, T, 5);
       }
     }
