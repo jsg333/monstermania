@@ -1,18 +1,26 @@
 // Phase 2: platforms, a camera, Grumps, dying and checkpoints.
 
 import CONFIG from '../data/config.js';
+import { restart } from '../state.js';
 import { horizontalStep, verticalStep, canJump } from '../systems/physics.js';
 import { takeJump } from '../systems/input.js';
 import { moveAndCollide } from '../systems/collision.js';
 import { followCamera, easeCamera } from '../systems/camera.js';
 import { isDeadly, updateSnoozers, respawn, makePuff, stepPuff, collectGoo } from '../systems/hazards.js';
 import { applyBouncers, touchingSpikes } from '../systems/bouncers.js';
-import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff, drawGogio, drawFungy, drawGooDrop } from '../render/sprites.js';
+import { applyIckio, reachedExit } from '../systems/ickio.js';
+import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff, drawGogio, drawFungy, drawGooDrop, drawIckio, drawBigIckio } from '../render/sprites.js';
 import { drawFps, drawHint } from '../render/ui.js';
 
 export function update(state, input, dt, now) {
   state.puff = stepPuff(state.puff, dt);
   state.time = now;
+
+  // Won? Freeze the world until they press a button to play again.
+  if (state.won) {
+    if (input.jump && now - state.won > 800) Object.assign(state, restart(state));
+    return state;
+  }
 
   // Dead: hold still for a beat, then pop back at the checkpoint.
   if (state.deadUntil) {
@@ -40,12 +48,22 @@ export function update(state, input, dt, now) {
   p = boing.player;
   state.lastBounce = boing.bounced || state.lastBounce;
 
+  // ⭐ Ickio. Speed in, speed out.
+  const warp = applyIckio(p, state.level, CONFIG);
+  p = warp.player;
+  if (warp.used) state.warps++;
+
   state.player = p;
 
   const woke = updateSnoozers(p, state.level, state.checkpoint, CONFIG);
   state.checkpoint = woke.checkpoint;
 
   state.gooDrops += collectGoo(p, state.level, CONFIG);
+
+  if (reachedExit(p, state.level, CONFIG)) {
+    state.won = now;
+    return state;
+  }
 
   // Ethan's rule: land on top of a monster or his spikes get you. Bouncing
   // wins — if you landed cleanly this frame you are safe, even though your
@@ -81,6 +99,8 @@ export function draw(ctx, state, fps) {
   ctx.translate(-Math.round(state.cam.x), -Math.round(state.cam.y));
 
   drawLevel(ctx, level, state.cam, view, CONFIG);
+  if (level.exit) drawBigIckio(ctx, level.exit, state.time, CONFIG);
+  for (const ick of level.ickios) drawIckio(ctx, ick, state.time, CONFIG);
   for (const s of level.snoozers) drawSnoozer(ctx, s, state.time, CONFIG);
   for (const f of level.fungies) drawFungy(ctx, f, state.time, CONFIG);
   for (const g of level.gogios) drawGogio(ctx, g, state.time, CONFIG);
@@ -95,4 +115,30 @@ export function draw(ctx, state, fps) {
   drawHint(ctx, 'Arrows or A/D to move  ·  ANY other button to jump  ·  land on TOP of a monster — his sides have spikes!', view.h - 40);
   const totalGoo = level.gooDrops.length;
   drawHint(ctx, `Restarts: ${state.deaths}   ·   Goo Drops: ${state.gooDrops} / ${totalGoo}`, view.h - 20);
+
+  if (state.won) drawWinScreen(ctx, state, view);
+}
+
+function drawWinScreen(ctx, state, view) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(6, 22, 12, 0.86)';
+  ctx.fillRect(0, 0, view.w, view.h);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#7dff2e';
+  ctx.font = 'bold 46px system-ui, sans-serif';
+  ctx.fillText('LEVEL COMPLETE!', view.w / 2, view.h / 2 - 40);
+
+  ctx.fillStyle = '#dfffcb';
+  ctx.font = '18px system-ui, sans-serif';
+  const total = state.level.gooDrops.length;
+  ctx.fillText(`Goo Drops: ${state.gooDrops} / ${total}`, view.w / 2, view.h / 2 + 4);
+  ctx.fillText(`Restarts: ${state.deaths}`, view.w / 2, view.h / 2 + 30);
+  ctx.fillText(`Trips through Ickio: ${state.warps}`, view.w / 2, view.h / 2 + 56);
+
+  ctx.fillStyle = '#9cff6b';
+  ctx.font = 'bold 16px system-ui, sans-serif';
+  ctx.fillText('Press any button to play again', view.w / 2, view.h / 2 + 100);
+  ctx.textAlign = 'left';
+  ctx.restore();
 }

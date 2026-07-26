@@ -61,6 +61,9 @@ export const CONFIG = {
   BOSS_WINDUP_MS: 500,      // he squishes before he jumps, so you get a fair warning
   BOSS_SPEEDUP_PER_HIT: 1.25,
 
+  // ---- Ickio ----
+  ICKIO_HOLE: 22,           // how wide the hole is. Bigger = easier to dive into.
+
   // ---- Goo Drops (coins you collect for character perks) ----
   GOO_SPIN_MS: 1400,        // how fast the coin spins
   GOO_PER_LEVEL: 3,

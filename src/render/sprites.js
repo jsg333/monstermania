@@ -231,6 +231,69 @@ export function drawGooDrop(ctx, d, time, cfg = CONFIG) {
   ctx.fill();
 }
 
+// Ickio — vibrant lime green, with a hole you can actually see. Ethan's
+// invention, and the star of the game.
+export function drawIckio(ctx, ick, time, cfg = CONFIG) {
+  const T = cfg.TILE;
+  const cx = ick.x + T / 2;
+  const cy = ick.y + T / 2;
+  const wobble = 1 + Math.sin(time / 420 + ick.x) * 0.05;
+
+  ctx.fillStyle = '#7dff2e';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, (T / 2) * wobble, (T / 2) / wobble, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // the hole — drawn dark and slightly inset so it reads as a hole, not a dot
+  ctx.fillStyle = '#0a1c07';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, cfg.ICKIO_HOLE / 2, (cfg.ICKIO_HOLE / 2) * 0.92, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#b6ff86';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 1, cfg.ICKIO_HOLE / 2, (cfg.ICKIO_HOLE / 2) * 0.92, 0, Math.PI, 0);
+  ctx.stroke();
+
+  // two little eyes above the hole so he reads as a monster
+  ctx.fillStyle = '#0a1c07';
+  ctx.beginPath(); ctx.arc(cx - 8, cy - 11, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + 8, cy - 11, 2, 0, Math.PI * 2); ctx.fill();
+}
+
+// Big Ickio — the level exit. Dive in to win.
+export function drawBigIckio(ctx, exit, time, cfg = CONFIG) {
+  const T = cfg.TILE;
+  const cx = exit.x + T / 2;
+  const cy = exit.y + T / 2;
+  const pulse = 1 + Math.sin(time / 300) * 0.06;
+  const R = T * 0.85 * pulse;
+
+  ctx.save();
+  ctx.shadowColor = '#7dff2e';
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = '#7dff2e';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, R, R * 0.95, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.fillStyle = '#081706';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, R * 0.6, R * 0.56, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#081706';
+  ctx.beginPath(); ctx.arc(cx - 15, cy - 20, 3.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + 15, cy - 20, 3.5, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = '#dfffcb';
+  ctx.font = 'bold 11px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('DIVE IN!', cx, cy - R - 6);
+  ctx.textAlign = 'left';
+}
+
 export function drawPlayer(ctx, p) {
   ctx.fillStyle = '#ffd54a';
   ctx.fillRect(p.x, p.y, p.w, p.h);
