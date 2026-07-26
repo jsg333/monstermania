@@ -99,23 +99,45 @@ Ethan then added three rulings during playtesting:
 
 Three bugs surfaced here that pure-function tests could not see: monsters on the ground were unbounceable, levels never reset between plays, and running clamped away Fungy's forward throw. See `tests/integration.test.js`.
 
-## Phase 4 — Ickio ⭐
+## Phase 4 — Ickio ✅ DONE
 
 1. Linked Ickio pairs (matched by color id) placed in the level data.
 2. Enter by touching the hole — no button press.
 3. **Momentum preserved through the teleport.** Fall fast in, launch fast out. Test this with numbers, not vibes.
 4. Big Ickio = the level exit. Level-complete screen.
 
-**Done when:** dropping into an Ickio from a great height visibly launches you further than walking into one. Unit test asserting speed-in equals speed-out.
+**Done.** Ickios pair up two at a time in reading order (a level with an odd number now refuses to load). You enter by touching the hole — no button. Speed in equals speed out, asserted exactly, with a test whose job is to stop a future assistant "tidying" it away. The hole you came out of is ignored until you leave it, so no ping-ponging.
 
-## Phase 5 — World 1 (6 levels) + Big Gogio
+Big Ickio is the level exit, with a LEVEL COMPLETE screen showing Goo Drops, restarts and trips through Ickio.
+
+## Phase 5 — World 1 (6 levels) + Big Gogio ✅ DONE
 
 1. Build levels 1-1 through 1-5 following **Teach → Test → Twist** from the design doc. 30–90 seconds each.
 2. Boss 1-6: Big Gogio bounces around; land on his head 3 times; he speeds up as health drops; **half-second squish wind-up before every jump** so it's readable.
 3. Health bar UI, boss defeat animation.
 4. Level-select screen.
 
-**Done when:** a kid who has never seen the game can finish World 1 without help. Go find one and watch them play — don't guess.
+**Done.** Six levels on Teach → Test → Twist, a level-select screen with locks and per-level Goo Drop counts, and progress saved to localStorage.
+
+Big Gogio follows Ethan's design: he moves around a lot, you land on his head to take his health, and he gets angrier with every hit. He squishes down for half a second before each leap so the player gets a fair warning.
+
+**Still needs the real acceptance test:** a kid who has never seen the game finishing World 1 without help. Go find one and watch — don't guess.
+
+### How to playtest this in a browser
+
+`window.__mm` exposes the live game. Use it instead of reading pixels off the canvas.
+
+```js
+__mm.step(40);                       // advance frames by hand
+__mm.setInput({ right: true });      // drive the player
+__mm.goTo('1-3');                    // jump straight to a level
+__mm.game.deaths; __mm.game.won;     // read exact state
+__mm.lastError;                      // whatever crashed the loop
+```
+
+**Why `step()` exists:** browsers throttle `requestAnimationFrame` to zero in a background tab, so a perfectly healthy game looks completely frozen. That produced several false "the loop is dead" diagnoses. `step()` drives the game directly and works regardless.
+
+**Why this matters:** a scripted playtest died 11 times on level 1-1 — the level whose entire job is being unfailable. Every unit test was green. Level 1-1 now has a safety floor.
 
 ## Phase 6 — Monster Maker + Goo Drops
 
