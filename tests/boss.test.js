@@ -168,3 +168,64 @@ describe('1-1 is genuinely safe, as the difficulty plan promises', () => {
     expect(rampRow.some((t) => t === 1)).toBe(true);
   });
 });
+
+// Jeff spotted a coin on a shelf that no jump could reach. The cause: the
+// Gogio meant to launch you was directly UNDER that shelf, so bouncing just
+// bonked your head on its underside. Two of 1-3's three coins were
+// unreachable. This rule stops it happening again.
+describe('every Gogio has clear sky above him', () => {
+  const CLEARANCE = 8;   // tiles
+
+  it('never puts a ceiling right above a bouncer', () => {
+    const T = CONFIG.TILE;
+    const offenders = [];
+    for (const level of world1) {
+      for (const g of level.gogios) {
+        const col = g.x / T;
+        const row = g.y / T;
+        for (let r = row - 1; r >= Math.max(0, row - CLEARANCE); r--) {
+          if (level.tiles[r][col] === 1) {
+            offenders.push(`${level.id}: Gogio at col ${col} has a ceiling ${row - r} tiles above`);
+            break;
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('puts the shelf you are aiming for beside the Gogio, not on top of him', () => {
+    const T = CONFIG.TILE;
+    for (const level of world1) {
+      for (const g of level.gogios) {
+        const col = g.x / T;
+        // the tile column directly above must be empty all the way up
+        const clear = level.tiles
+          .slice(0, g.y / T)
+          .every((row) => row[col] !== 1);
+        expect(clear, `${level.id} Gogio at col ${col}`).toBe(true);
+      }
+    }
+  });
+});
+
+// A coin you cannot reach is worse than no coin — it reads as a bug to a kid.
+describe('Goo Drops sit somewhere a player could actually get to', () => {
+  it('never floats a coin more than a jump above the nearest solid ground', () => {
+    const T = CONFIG.TILE;
+    const jumpTiles = ((CONFIG.JUMP_SPEED ** 2) / (2 * CONFIG.GRAVITY)) / T;
+    for (const level of world1) {
+      for (const d of level.gooDrops) {
+        const col = d.x / T;
+        const row = d.y / T;
+        let floorBelow = null;
+        for (let r = row + 1; r < level.rows; r++) {
+          if (level.tiles[r][col] === 1) { floorBelow = r; break; }
+        }
+        expect(floorBelow, `${level.id} coin at col ${col} has nothing under it`).not.toBe(null);
+        expect(floorBelow - row, `${level.id} coin at col ${col} floats too high`)
+          .toBeLessThanOrEqual(Math.ceil(jumpTiles) + 1);
+      }
+    }
+  });
+});
