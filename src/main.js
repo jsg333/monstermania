@@ -62,9 +62,10 @@ function crashed(err) {
   ctx.fillText(String(err && err.stack ? err.stack.split('\n')[1] || '' : '').trim().slice(0, 140), 20, 76);
 }
 
-function frame(now) {
-  const dt = Math.min((now - last) / 1000, 1 / 30);
-  last = now;
+// One frame of work, separated from requestAnimationFrame so tests can drive
+// it directly. Browsers throttle rAF to nothing in a background tab, which
+// makes a perfectly healthy game look frozen — that cost me a lot of time.
+function tick(now, dt) {
   fps += ((1 / Math.max(dt, 0.0001)) - fps) * 0.1;
 
   const dpr = window.devicePixelRatio || 1;
@@ -123,5 +124,18 @@ window.__mm = {
   },
   place(x, y) { if (game) game.player = { ...game.player, x, y, vx: 0, vy: 0 }; },
   press(code) { window.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true })); },
-  release(code) { window.dispatchEvent(new KeyboardEvent('keyup', { code, bubbles: true })); }
+  release(code) { window.dispatchEvent(new KeyboardEvent('keyup', { code, bubbles: true })); },
+
+  // Drive the game by hand — works even when the tab is hidden and rAF is
+  // throttled to zero.
+  setInput(patch) { Object.assign(input, patch); },
+  step(frames = 1, dtMs = 16.7) {
+    let t = last;
+    for (let i = 0; i < frames; i++) {
+      t += dtMs;
+      last = t;
+      if (!tick(t, dtMs / 1000)) return { crashed: true, at: i };
+    }
+    return { crashed: false, frames };
+  }
 };
