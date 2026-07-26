@@ -23,6 +23,7 @@ export function createMaker(saveData) {
 // and the rest of the game treats every key as "jump".
 export function attachTyping(maker, target = window) {
   const onKey = (e) => {
+    if (maker.nameField && document.activeElement === maker.nameField) return;
     if (maker.row !== 0) return;
     if (e.key === 'Backspace') {
       maker.character.name = maker.character.name.slice(0, -1);
@@ -57,8 +58,12 @@ export function makerRects(view) {
   };
 }
 
-// An iPad only shows its keyboard for a real text field, so keep an invisible
-// one off-screen and focus it when the player wants to type their name.
+// The name box is a REAL text field sitting on top of the canvas.
+//
+// The first attempt hid it off-screen and called focus() from the game loop.
+// iOS refuses both of those: the keyboard only appears for a visible input
+// focused synchronously during a real tap. Letting the browser own the field
+// means the tap lands on the input itself, and everything just works.
 export function attachNameField(maker, doc = document) {
   let el = doc.getElementById('mm-name');
   if (!el) {
@@ -66,21 +71,47 @@ export function attachNameField(maker, doc = document) {
     el.id = 'mm-name';
     el.type = 'text';
     el.maxLength = 12;
+    el.placeholder = 'tap to type your name';
     el.autocapitalize = 'characters';
-    el.style.cssText =
-      'position:fixed;left:-2000px;top:0;width:10px;height:10px;opacity:0;';
+    el.autocomplete = 'off';
+    el.spellcheck = false;
     doc.body.appendChild(el);
     el.addEventListener('input', () => {
-      maker.character.name = el.value.replace(/[^A-Za-z0-9 ]/g, '').slice(0, 12);
+      const clean = el.value.replace(/[^A-Za-z0-9 ]/g, '').slice(0, 12);
+      if (clean !== el.value) el.value = clean;
+      maker.character.name = clean;
     });
+    el.addEventListener('focus', () => { maker.row = 0; });
+    // Keys typed into the box must not also drive the game behind it.
+    el.addEventListener('keydown', (e) => e.stopPropagation());
+    el.addEventListener('keyup', (e) => e.stopPropagation());
   }
   maker.nameField = el;
   return el;
 }
 
+// Park the real input exactly where the drawn Name row is.
+export function showNameField(maker, view) {
+  const el = maker.nameField;
+  if (!el) return;
+  const r = makerRects(view).name;
+  el.style.display = 'block';
+  el.style.left = `${r.x}px`;
+  el.style.top = `${r.y}px`;
+  el.style.width = `${r.w - 24}px`;
+  el.style.height = `${r.h - 12}px`;
+  if (el.value !== maker.character.name) el.value = maker.character.name;
+}
+
+export function hideNameField(maker) {
+  if (maker.nameField) {
+    maker.nameField.blur();
+    maker.nameField.style.display = 'none';
+  }
+}
+
 export function focusName(maker) {
   if (!maker.nameField) return;
-  maker.nameField.value = maker.character.name;
   try { maker.nameField.focus(); } catch { /* ignore */ }
 }
 
@@ -176,10 +207,7 @@ export function draw(ctx, maker, view) {
   ctx.fillStyle = nameChosen ? '#7dff2e' : '#9ecfae';
   ctx.font = 'bold 16px system-ui, sans-serif';
   ctx.fillText('Name', left, rowY(0));
-  ctx.fillStyle = '#dfffcb';
-  ctx.font = '18px system-ui, sans-serif';
-  const shownName = maker.character.name || (nameChosen ? '' : 'type a name');
-  ctx.fillText(shownName + (nameChosen ? '_' : ''), left + 110, rowY(0));
+  // The name itself is drawn by a real <input> sitting over the canvas.
 
   SLOTS.forEach((slot, i) => {
     const y = rowY(i + 1);

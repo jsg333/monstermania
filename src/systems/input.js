@@ -8,6 +8,23 @@ const DOWN_KEYS = new Set(['ArrowDown', 'KeyS']);
 // These do nothing in-game, so they must not count as "any button".
 const IGNORED = new Set(['ArrowUp', 'ArrowDown', 'KeyW', 'KeyS', 'Tab', 'Escape', 'F5', 'F11']);
 
+// Where the on-screen controls live. Exported so the game can DRAW them in
+// exactly the places that respond — invisible controls are a guessing game.
+export function touchPads(w, h) {
+  const size = Math.max(70, Math.min(120, h * 0.20));
+  const pad = 20;
+  const y = h - size - pad;
+  return {
+    left: { x: pad, y, w: size, h: size },
+    right: { x: pad * 2 + size, y, w: size, h: size },
+    jump: { x: w - pad - size * 1.5, y, w: size * 1.5, h: size }
+  };
+}
+
+export function inRect(r, x, y) {
+  return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+}
+
 export function isJumpKey(code) {
   if (LEFT_KEYS.has(code) || RIGHT_KEYS.has(code)) return false;
   if (IGNORED.has(code)) return false;
@@ -17,6 +34,7 @@ export function isJumpKey(code) {
 export function createInput(target = window) {
   const state = {
     left: false, right: false, up: false, down: false, confirm: false, escape: false,
+    usingTouch: false,
     // Where the mouse/finger is, and whether it was just pressed. Menus need
     // real coordinates: cards look like buttons, so clicking one must pick
     // THAT card rather than launching whatever the keyboard had highlighted.
@@ -71,40 +89,61 @@ export function createInput(target = window) {
   const onMouseUp = (e) => { state.pointerDown = false; held.delete('mouse' + e.button); if (held.size === 0) state.jump = false; };
   const onContextMenu = (e) => e.preventDefault();
 
-  // Touch: left half of the screen steers, right half jumps.
+  // ---- Touch ----
+  //
+  // The old version split the screen into invisible zones. Two problems: a kid
+  // has no way to know they exist, and holding one while pressing another was
+  // unreliable. These are real, drawn, finger-sized pads, and every touch event
+  // recomputes which pads are currently held — so you can hold left and tap
+  // jump at the same time, which platformers rather depend on.
+  const live = new Map();
+
+  const applyTouches = () => {
+    const pads = touchPads(window.innerWidth, window.innerHeight);
+    let left = false, right = false, jump = false;
+    for (const { x, y } of live.values()) {
+      if (inRect(pads.left, x, y)) left = true;
+      else if (inRect(pads.right, x, y)) right = true;
+      else jump = true;                       // anywhere else on screen jumps
+    }
+    state.left = left;
+    state.right = right;
+    if (jump && !state.jump) press(performance.now());
+    if (!jump) { state.jump = false; }
+  };
+
   const onTouchStart = (e) => {
     if (inUI(e)) return;
-    if (e.changedTouches[0]) {
-      state.pointerX = e.changedTouches[0].clientX;
-      state.pointerY = e.changedTouches[0].clientY;
-      state.pointerClick = true;
-      state.pointerDown = true;
-      state.jumpFromPointer = true;
-    }
+    state.usingTouch = true;
     for (const t of e.changedTouches) {
-      if (t.clientX < window.innerWidth * 0.25) state.left = true;
-      else if (t.clientX < window.innerWidth * 0.5) state.right = true;
-      else { held.add('touch' + t.identifier); press(performance.now()); }
+      live.set(t.identifier, { x: t.clientX, y: t.clientY });
+      state.pointerX = t.clientX;
+      state.pointerY = t.clientY;
     }
+    state.pointerClick = true;
+    state.pointerDown = true;
+    state.jumpFromPointer = true;
+    applyTouches();
     e.preventDefault();
   };
-  // Without this the finger's position never updates, so you can't drag to
-  // draw in the Level Maker and nothing hovers.
+
+  // Without this a finger's position never updates, so you cannot drag to draw
+  // in the Level Maker and sliding between pads does nothing.
   const onTouchMove = (e) => {
     if (inUI(e)) return;
-    const t = e.changedTouches[0];
-    if (t) { state.pointerX = t.clientX; state.pointerY = t.clientY; }
+    for (const t of e.changedTouches) {
+      live.set(t.identifier, { x: t.clientX, y: t.clientY });
+      state.pointerX = t.clientX;
+      state.pointerY = t.clientY;
+    }
+    applyTouches();
     e.preventDefault();
   };
 
   const onTouchEnd = (e) => {
-    state.pointerDown = false;
-    for (const t of e.changedTouches) {
-      if (t.clientX < window.innerWidth * 0.25) state.left = false;
-      else if (t.clientX < window.innerWidth * 0.5) state.right = false;
-      else held.delete('touch' + t.identifier);
-    }
-    if (held.size === 0) state.jump = false;
+    for (const t of e.changedTouches) live.delete(t.identifier);
+    if (live.size === 0) state.pointerDown = false;
+    applyTouches();
   };
 
   target.addEventListener('keydown', onKeyDown);
@@ -116,6 +155,7 @@ export function createInput(target = window) {
   target.addEventListener('touchstart', onTouchStart, { passive: false });
   target.addEventListener('touchmove', onTouchMove, { passive: false });
   target.addEventListener('touchend', onTouchEnd);
+  target.addEventListener('touchcancel', onTouchEnd);
   target.addEventListener('blur', () => { held.clear(); state.left = state.right = state.jump = false; });
 
   return state;

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createInput } from '../src/systems/input.js';
+import { createInput, touchPads, inRect } from '../src/systems/input.js';
 import { menuButtons } from '../src/scenes/levelSelect.js';
 import { makerRects } from '../src/scenes/monsterMaker.js';
 import { buttonRects } from '../src/scenes/editor.js';
@@ -24,12 +24,17 @@ const touch = (x, y) => ({
 
 describe('touch input', () => {
   let target, input;
+  const W = 1024, H = 768;
   beforeEach(() => {
     target = fakeTarget();
-    globalThis.window = { innerWidth: 1024, innerHeight: 768 };
+    globalThis.window = { innerWidth: W, innerHeight: H };
     globalThis.performance = { now: () => 1000 };
+    globalThis.document = { activeElement: null };
     input = createInput(target);
   });
+
+  const pads = () => touchPads(W, H);
+  const centre = (r) => [r.x + r.w / 2, r.y + r.h / 2];
 
   it('records where a finger went down', () => {
     target.fire('touchstart', touch(700, 400));
@@ -38,8 +43,7 @@ describe('touch input', () => {
     expect(input.pointerClick).toBe(true);
   });
 
-  // Without this you cannot drag to draw in the Level Maker — the finger's
-  // position never updates after the first touch.
+  // Without this you cannot drag to draw in the Level Maker.
   it('follows a finger as it moves', () => {
     target.fire('touchstart', touch(300, 300));
     target.fire('touchmove', touch(420, 360));
@@ -54,11 +58,72 @@ describe('touch input', () => {
     expect(input.pointerDown).toBe(false);
   });
 
-  it('still drives the player: left side steers, right side jumps', () => {
-    target.fire('touchstart', touch(100, 400));       // far left quarter
+  it('moves you when you press the LEFT pad', () => {
+    target.fire('touchstart', touch(...centre(pads().left)));
     expect(input.left).toBe(true);
-    target.fire('touchstart', touch(900, 400));       // right half
+    expect(input.right).toBe(false);
+  });
+
+  it('moves you when you press the RIGHT pad', () => {
+    target.fire('touchstart', touch(...centre(pads().right)));
+    expect(input.right).toBe(true);
+  });
+
+  it('jumps when you press anywhere else', () => {
+    target.fire('touchstart', touch(...centre(pads().jump)));
     expect(input.jump).toBe(true);
+  });
+
+  it('lets go when you lift your finger', () => {
+    const [x, y] = centre(pads().left);
+    target.fire('touchstart', touch(x, y));
+    target.fire('touchend', touch(x, y));
+    expect(input.left).toBe(false);
+  });
+
+  // A platformer is unplayable if you can't run and jump at the same time.
+  it('lets you hold LEFT and press JUMP together', () => {
+    const [lx, ly] = centre(pads().left);
+    const [jx, jy] = centre(pads().jump);
+    target.fire('touchstart', { changedTouches: [{ clientX: lx, clientY: ly, identifier: 1 }], preventDefault() {}, target: null });
+    target.fire('touchstart', { changedTouches: [{ clientX: jx, clientY: jy, identifier: 2 }], preventDefault() {}, target: null });
+    expect(input.left).toBe(true);
+    expect(input.jump).toBe(true);
+  });
+
+  it('keeps running when you lift only the jump finger', () => {
+    const [lx, ly] = centre(pads().left);
+    const [jx, jy] = centre(pads().jump);
+    target.fire('touchstart', { changedTouches: [{ clientX: lx, clientY: ly, identifier: 1 }], preventDefault() {}, target: null });
+    target.fire('touchstart', { changedTouches: [{ clientX: jx, clientY: jy, identifier: 2 }], preventDefault() {}, target: null });
+    target.fire('touchend', { changedTouches: [{ clientX: jx, clientY: jy, identifier: 2 }], preventDefault() {}, target: null });
+    expect(input.left).toBe(true);
+    expect(input.jump).toBe(false);
+  });
+
+  it('slides from one pad to the other', () => {
+    const [lx, ly] = centre(pads().left);
+    const [rx, ry] = centre(pads().right);
+    target.fire('touchstart', touch(lx, ly));
+    expect(input.left).toBe(true);
+    target.fire('touchmove', touch(rx, ry));
+    expect(input.left).toBe(false);
+    expect(input.right).toBe(true);
+  });
+
+  it('flags that a finger is being used, so the pads get drawn', () => {
+    expect(input.usingTouch).toBe(false);
+    target.fire('touchstart', touch(400, 400));
+    expect(input.usingTouch).toBe(true);
+  });
+
+  it('gives the pads finger-sized targets near the bottom', () => {
+    const p = pads();
+    for (const r of Object.values(p)) {
+      expect(r.h).toBeGreaterThanOrEqual(70);
+      expect(r.y + r.h).toBeLessThanOrEqual(H);
+    }
+    expect(inRect(p.left, ...centre(p.left))).toBe(true);
   });
 });
 

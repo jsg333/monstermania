@@ -13,6 +13,7 @@ import { stepBoss, bossCollision, damageBoss, bossBox, isWindingUp } from '../sy
 import { drawLevel, drawGrump, drawSnoozer, drawPlayer, drawPuff, drawGogio, drawFungy, drawGooDrop, drawIckio, drawBigIckio } from '../render/sprites.js';
 import { drawFps, drawHint } from '../render/ui.js';
 import { drawButton, hit } from '../render/uiButtons.js';
+import { touchPads } from '../systems/input.js';
 import { sfx } from '../systems/sound.js';
 import { themeFor } from '../data/themes.js';
 import { drawBackdrop } from '../render/backdrop.js';
@@ -158,6 +159,30 @@ export function draw(ctx, state, fps) {
   // Remembered so update() can hit-test it next frame.
   state.menuButton = { x: view.w - 104, y: 14, w: 90, h: 44 };
   drawButton(ctx, state.menuButton, 'MENU', { bg: 'rgba(12,30,20,.85)' });
+
+  // Draw the touch controls in exactly the places that respond to a finger.
+  if (state.showTouchPads) {
+    const pads = touchPads(view.w, view.h);
+    ctx.save();
+    ctx.globalAlpha = 0.30;
+    for (const [name, r] of Object.entries(pads)) {
+      ctx.fillStyle = '#4ea86a';
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(r.x, r.y, r.w, r.h, 14) : ctx.rect(r.x, r.y, r.w, r.h);
+      ctx.fill();
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = '#dfffcb';
+      ctx.font = `bold ${Math.round(r.h * 0.34)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(name === 'left' ? '◀' : name === 'right' ? '▶' : 'JUMP',
+        r.x + r.w / 2, r.y + r.h / 2);
+      ctx.globalAlpha = 0.30;
+    }
+    ctx.restore();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
 
   drawFps(ctx, fps);
   drawHint(ctx, 'Arrows or A/D to move  ·  ANY other button to jump  ·  land on TOP of a monster — his sides have spikes!  ·  ESC = menu', view.h - 40);

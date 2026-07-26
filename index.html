@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Monstermania</title>
     <style>
       html, body {
@@ -12,7 +12,34 @@
         -webkit-user-select: none; user-select: none;
         touch-action: none;
       }
-      #game { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; }
+      /* touch-action is NOT inherited, so setting it on <body> did nothing for
+         the canvas — iOS Safari treated every drag as a scroll or zoom gesture
+         and swallowed it. This is why touch movement did not work on iPad. */
+      #game {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        image-rendering: pixelated;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      /* The name box in the Monster Maker is a real text field sitting on top
+         of the canvas. iOS only shows its keyboard for a visible input that is
+         focused during an actual tap, so it has to be a genuine element. */
+      #mm-name {
+        position: fixed;
+        display: none;
+        font: bold 18px system-ui, sans-serif;
+        color: #dfffcb;
+        background: #14301f;
+        border: 2px solid #4ea86a;
+        border-radius: 6px;
+        padding: 4px 10px;
+        outline: none;
+        z-index: 20;
+      }
     </style>
   </head>
   <body>

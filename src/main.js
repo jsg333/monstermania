@@ -90,6 +90,8 @@ function tick(now, dt) {
   const view = { w: ctx.canvas.width / dpr, h: ctx.canvas.height / dpr };
 
   try {
+    if (scene !== 'maker') monsterMaker.hideNameField(maker);
+
     if (scene === 'editor') {
       const hover = editor.cellAt(view, input.pointerX, input.pointerY);
 
@@ -160,9 +162,11 @@ function tick(now, dt) {
         drawEditor(ctx, ed, view, hover);
       }
     } else if (scene === 'maker') {
+      monsterMaker.showNameField(maker, view);
       const done = monsterMaker.update(maker, input, now, view);
       monsterMaker.draw(ctx, maker, view);
       if (done) {
+        monsterMaker.hideNameField(maker);
         sel.save = save({ ...sel.save, character: { ...done } });
         maker.goo = totalGoo(sel.save);
         scene = 'select';
@@ -199,6 +203,7 @@ function tick(now, dt) {
         input.jumpConsumed = true;
       }
     } else {
+      game.showTouchPads = input.usingTouch;
       play.update(game, input, dt, now);
       play.draw(ctx, game, fps);
 
