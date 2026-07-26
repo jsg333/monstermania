@@ -21,6 +21,7 @@ export const CONFIG = {
   GROUND_FRICTION: 3000,    // how fast you stop on the ground
   AIR_ACCEL: 1600,          // steering while you're in the air (less than on the ground)
   AIR_FRICTION: 400,        // you keep your speed better in the air
+  BOOST_DECAY: 260,         // how fast a monster's throw fades back to normal running
 
   // ---- Jumping ----
   JUMP_SPEED: 620,          // how hard you launch upward

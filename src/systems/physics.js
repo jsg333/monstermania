@@ -29,9 +29,22 @@ export function horizontalStep(player, input, dt, cfg = CONFIG) {
   const friction = player.onGround ? cfg.GROUND_FRICTION : cfg.AIR_FRICTION;
   let vx = player.vx;
 
-  if (dir !== 0) {
+  // RUN_SPEED is how fast you can push YOURSELF. It is not a speed limit on
+  // the world. When a monster throws you faster than that — Fungy now, Ickio
+  // later — that extra speed has to survive, or the throw does nothing at all
+  // the moment you hold a direction. So: don't accelerate past your own top
+  // speed, but never clamp DOWN something that gave you a boost. Let it bleed
+  // off gently instead.
+  const boosted = Math.abs(vx) > cfg.RUN_SPEED && Math.sign(vx) === dir;
+
+  if (dir !== 0 && !boosted) {
     vx += dir * accel * dt;
     vx = Math.max(-cfg.RUN_SPEED, Math.min(cfg.RUN_SPEED, vx));
+  } else if (boosted) {
+    const bleed = cfg.BOOST_DECAY * dt;
+    vx = Math.abs(vx) - bleed <= cfg.RUN_SPEED
+      ? Math.sign(vx) * cfg.RUN_SPEED
+      : vx - Math.sign(vx) * bleed;
   } else if (vx !== 0) {
     const drop = friction * dt;
     vx = Math.abs(vx) <= drop ? 0 : vx - Math.sign(vx) * drop;

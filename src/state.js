@@ -4,8 +4,11 @@
 import { createPlayer } from './systems/physics.js';
 import { createCamera } from './systems/camera.js';
 import playground from './data/levels/playground.js';
+import { instantiate } from './data/levels/format.js';
 
-export function createState(level = playground) {
+export function createState(sourceLevel = playground) {
+  // Always play a fresh copy — see instantiate() for why.
+  const level = instantiate(sourceLevel);
   return {
     scene: 'play',
     level,

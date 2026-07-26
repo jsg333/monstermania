@@ -21,8 +21,14 @@ export function landingBox(m, cfg = CONFIG) {
   return { x: m.x + 2, y: m.y, w: cfg.TILE - 4, h: cfg.TILE * 0.55 };
 }
 
-export function isLandingOn(player, m, cfg = CONFIG) {
-  if (player.vy <= 0) return false;                     // must be falling
+// `fallingVy` is how fast you were falling when you ARRIVED, before the floor
+// had its say. That distinction matters: a monster standing on the ground is
+// the same height as you are when you land next to him, so the floor zeroes
+// your speed on the very same frame you touch him. Checking the post-collision
+// speed meant every monster standing on solid ground was impossible to bounce
+// on — which is most of them.
+export function isLandingOn(player, m, cfg = CONFIG, fallingVy = player.vy) {
+  if (fallingVy <= 0) return false;                     // must have been falling
   return overlaps(playerBox(player), landingBox(m, cfg));
 }
 
@@ -61,19 +67,19 @@ export function bounceFungy(f, player, now, cfg = CONFIG) {
 
 // --- Put it together ---------------------------------------------------
 
-export function applyBouncers(player, level, now, cfg = CONFIG) {
+export function applyBouncers(player, level, now, cfg = CONFIG, fallingVy = player.vy) {
   let p = player;
   let bounced = null;
 
   for (const g of level.gogios) {
-    if (!isLandingOn(p, g, cfg)) continue;
+    if (!isLandingOn(p, g, cfg, fallingVy)) continue;
     const power = bounceGogio(g, now, cfg);
     p = { ...p, y: g.y - p.h, vy: -power, onGround: false, jumping: false };
     bounced = 'gogio';
   }
 
   for (const f of level.fungies) {
-    if (!isLandingOn(p, f, cfg)) continue;
+    if (!isLandingOn(p, f, cfg, fallingVy)) continue;
     const hop = bounceFungy(f, p, now, cfg);
     const capped = Math.max(-cfg.RUN_SPEED * 2, Math.min(cfg.RUN_SPEED * 2, hop.vx));
     p = { ...p, y: f.y - p.h, vy: hop.vy, vx: capped, onGround: false, jumping: false };

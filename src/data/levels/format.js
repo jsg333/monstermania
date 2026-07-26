@@ -46,3 +46,16 @@ export function parseLevel(name, map, cfg = CONFIG) {
     heightPx: rows.length * T
   };
 }
+
+// A parsed level is a shared, module-level object, but Snoozers wake up and
+// Gogio gets tired — those live ON the monsters. Without a fresh copy per
+// playthrough, restarting a level would hand you a world where every
+// checkpoint is already used and Gogio is permanently flat.
+export function instantiate(level) {
+  return {
+    ...level,
+    snoozers: level.snoozers.map((s) => ({ ...s, awake: false })),
+    fungies: level.fungies.map((f) => ({ ...f, lastBounceAt: -Infinity, squash: 0 })),
+    gogios: level.gogios.map((g) => ({ ...g, bounces: 0, lastBounceAt: -Infinity, squash: 0 }))
+  };
+}

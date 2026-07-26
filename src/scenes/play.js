@@ -30,12 +30,13 @@ export function update(state, input, dt, now) {
   p = verticalStep(p, { jumpNow, holding: input.jump }, dt, CONFIG);
 
   const wasOnGround = p.onGround;
+  const arrivingSpeed = p.vy;      // before the floor cancels it — see bouncers.js
   p = moveAndCollide(p, state.level, dt, CONFIG);
   if (wasOnGround && !p.onGround) p = { ...p, leftGroundAt: now };
 
   // Land on a monster and he throws you. Must come after collision, or the
   // floor would cancel the bounce on the same frame.
-  const boing = applyBouncers(p, state.level, now, CONFIG);
+  const boing = applyBouncers(p, state.level, now, CONFIG, arrivingSpeed);
   p = boing.player;
   state.lastBounce = boing.bounced || state.lastBounce;
 

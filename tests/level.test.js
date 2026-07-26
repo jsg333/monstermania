@@ -79,3 +79,16 @@ describe('the playground teaches the monsters', () => {
     expect(pg.tiles[shelfRow].some((t) => t === 1)).toBe(true);
   });
 });
+
+describe('every playthrough starts fresh', () => {
+  it('does not carry woken Snoozers or a tired Gogio into the next game', async () => {
+    const { createState } = await import('../src/state.js');
+    const a = createState();
+    a.level.snoozers[0].awake = true;
+    a.level.gogios[0].bounces = 3;
+
+    const b = createState();
+    expect(b.level.snoozers[0].awake).toBe(false);
+    expect(b.level.gogios[0].bounces).toBe(0);
+  });
+});

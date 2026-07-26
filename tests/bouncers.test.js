@@ -27,6 +27,15 @@ describe('you only bounce by landing on top', () => {
     expect(isLandingOn({ ...createPlayer(3 * T, T - 20), vy: -400 }, m)).toBe(false);
   });
 
+  // The floor zeroes your falling speed on the same frame you touch a monster
+  // who is standing on it, so we test the speed you ARRIVED at, not the one
+  // you're left with. Without this, monsters on the ground never bounce.
+  it('still bounces when the floor already cancelled your fall', () => {
+    const landed = { ...createPlayer(3 * T, T - 20), vy: 0, onGround: true };
+    expect(isLandingOn(landed, m, CONFIG, 0)).toBe(false);
+    expect(isLandingOn(landed, m, CONFIG, 420)).toBe(true);
+  });
+
   it('does nothing when you walk into his side', () => {
     expect(isLandingOn(falling(1 * T, T), m)).toBe(false);
   });

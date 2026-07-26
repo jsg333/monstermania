@@ -142,3 +142,33 @@ describe('Ickio', () => {
     expect(out.y).toBe(210);
   });
 });
+
+// Fungy throws you faster than you can run. If running clamped that away, the
+// throw would do nothing — and Ickio's momentum, the whole point of the game,
+// would break the same way.
+describe('a monster can throw you faster than you can run', () => {
+  it('does not clamp a boost back down to running speed', () => {
+    const fast = { ...createPlayer(), onGround: true, vx: CONFIG.RUN_SPEED * 1.9 };
+    const after = horizontalStep(fast, { ...noInput, right: true }, 0.0167);
+    expect(after.vx).toBeGreaterThan(CONFIG.RUN_SPEED);
+  });
+
+  it('bleeds the boost off gradually instead of instantly', () => {
+    let p = { ...createPlayer(), onGround: true, vx: CONFIG.RUN_SPEED * 2 };
+    const first = horizontalStep(p, { ...noInput, right: true }, 0.0167).vx;
+    expect(first).toBeLessThan(CONFIG.RUN_SPEED * 2);
+    expect(first).toBeGreaterThan(CONFIG.RUN_SPEED * 1.9);
+  });
+
+  it('settles back to exactly running speed and stays there', () => {
+    let p = { ...createPlayer(), onGround: true, vx: CONFIG.RUN_SPEED * 2 };
+    for (let i = 0; i < 200; i++) p = horizontalStep(p, { ...noInput, right: true }, 0.0167);
+    expect(p.vx).toBeCloseTo(CONFIG.RUN_SPEED, 5);
+  });
+
+  it('still lets you turn around while boosted', () => {
+    const p = { ...createPlayer(), onGround: true, vx: CONFIG.RUN_SPEED * 2 };
+    const after = horizontalStep(p, { ...noInput, left: true }, 0.0167);
+    expect(after.vx).toBeLessThan(CONFIG.RUN_SPEED * 2);
+  });
+});
