@@ -89,3 +89,15 @@ Open questions are tracked under **Still to decide** at the bottom of the design
 ## Memory
 
 `MEMORY.md` is the shared state file — either agent reads it at session start and picks up where the other stopped. Writes are user-triggered only ("remember this", "log this", "save this"), entries are persistent, and a contradiction gets flagged rather than silently overwritten.
+
+## Where this repo lives (2026-09-27)
+
+The working clone is `~/Projects/monstermania`, outside iCloud Drive. Keep it out of iCloud: iCloud races the package manager inside `node_modules` and corrupts it (17 conflict duplicates on 2026-09-06). The Cowork OS folder `Startup Lab Projects/Ethan Game Monstermania/` is only a pointer.
+
+## Session protocol
+
+Applies to every assistant (Claude, Codex, or anything else) working in this folder.
+
+- **Start:** read `HANDOFF.md` in this folder before doing anything else.
+- **End:** rewrite `HANDOFF.md` so the next assistant can continue cold — overwrite it, don't append; keep it under ~40 lines. In a git repo, commit it with the work.
+- `MEMORY.md` (if present) holds only what Jeff explicitly asked to remember. It is not the handoff.
